@@ -490,6 +490,111 @@ html.light #toolbar{background:rgba(245,245,243,.93)}
 ::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--border)}
 
+/* ── SITE FOOTER ─────────────────────────────────────── */
+#site-footer{
+  position:relative;z-index:1;
+  background:var(--surface);
+  border-top:1px solid var(--border);
+  padding:56px 24px 40px;
+  overflow:hidden;
+}
+#site-footer::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 80% at 50% 100%,rgba(200,245,0,.06) 0%,transparent 70%);
+  pointer-events:none;
+}
+.footer-inner{
+  max-width:1100px;margin:0 auto;
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  gap:40px;align-items:start;
+}
+@media(max-width:760px){
+  .footer-inner{grid-template-columns:1fr;gap:32px;text-align:center}
+  .footer-col-right{align-items:center}
+}
+/* left col */
+.footer-brand{font-size:1.5rem;font-weight:900;letter-spacing:-.03em;margin-bottom:8px}
+.footer-brand span{color:var(--accent)}
+.footer-tagline{font-size:.82rem;color:var(--text2);line-height:1.6;max-width:260px}
+/* middle col */
+.footer-col-mid{}
+.footer-col-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text2);margin-bottom:12px}
+.footer-stats-row{display:flex;flex-wrap:wrap;gap:10px}
+.footer-stat-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  border:1px solid var(--border);border-radius:999px;
+  padding:5px 12px;font-size:.78rem;font-weight:600;
+}
+.footer-stat-pill .pill-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+/* right col */
+.footer-col-right{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+@media(max-width:760px){.footer-col-right{align-items:center;width:100%}}
+
+/* tester profile */
+.tester-card{display:flex;align-items:flex-start;gap:12px}
+.tester-avatar{width:44px;height:44px;border-radius:50%;border:1px solid rgba(200,245,0,.25);flex-shrink:0;overflow:hidden}
+.tester-avatar svg{width:100%;height:100%}
+.tester-info{display:flex;flex-direction:column;gap:3px}
+.tester-name{font-size:.9rem;font-weight:800;color:var(--accent)}
+.tester-bio{font-size:.74rem;color:var(--text2);line-height:1.55;max-width:220px}
+.tester-skills{display:flex;flex-wrap:wrap;gap:6px}
+.skill-pill{font-size:.7rem;font-weight:600;padding:3px 10px;border-radius:999px;border:1px solid var(--border);color:var(--text2);background:var(--surface2);transition:all .18s;cursor:default}
+.skill-pill:hover{border-color:var(--accent);color:var(--accent)}
+@media(max-width:760px){.tester-card{justify-content:center}.tester-skills{justify-content:center}}
+
+/* tg-widget width fix */
+#tg-widget{width:100%;max-width:280px}
+
+/* telegram widget */
+#tg-widget{
+  display:inline-flex;align-items:center;gap:12px;
+  background:linear-gradient(135deg,#2AABEE22,#2AABEE11);
+  border:1px solid #2AABEE55;
+  border-radius:16px;padding:14px 20px;
+  text-decoration:none;color:var(--text);
+  transition:all .22s cubic-bezier(.22,1,.36,1);
+  position:relative;overflow:hidden;
+}
+#tg-widget::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,#2AABEE33,transparent);
+  opacity:0;transition:opacity .22s;
+}
+#tg-widget:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(42,171,238,.2);border-color:#2AABEE99}
+#tg-widget:hover::before{opacity:1}
+.tg-icon{
+  width:42px;height:42px;border-radius:50%;
+  background:linear-gradient(135deg,#2AABEE,#1a8cc8);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;box-shadow:0 4px 12px rgba(42,171,238,.35);
+}
+.tg-icon svg{width:22px;height:22px;fill:#fff}
+.tg-text{}
+.tg-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#2AABEE;display:block;margin-bottom:2px}
+.tg-name{font-size:.95rem;font-weight:800;display:block}
+.tg-sub{font-size:.75rem;color:var(--text2);display:block;margin-top:1px}
+.tg-pulse{
+  position:absolute;top:12px;right:12px;
+  width:8px;height:8px;border-radius:50%;background:#22C55E;
+  box-shadow:0 0 0 0 rgba(34,197,94,.5);
+  animation:tgPulse 2s ease-in-out infinite;
+}
+@keyframes tgPulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.5)}70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+
+/* footer bottom bar */
+.footer-bottom{
+  max-width:1100px;margin:40px auto 0;
+  padding-top:24px;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;
+}
+.footer-copy{font-size:.78rem;color:var(--text2)}
+.footer-copy span{color:var(--accent);font-weight:700}
+.footer-links{display:flex;gap:16px}
+.footer-links a{font-size:.78rem;color:var(--text2);text-decoration:none;transition:color .18s}
+.footer-links a:hover{color:var(--accent)}
+@media print{#site-footer{display:none!important}}
+
 /* ── MUSIC PLAYER ────────────────────────────────────── */
 #music-player{
   position:fixed;bottom:24px;right:24px;z-index:8000;
@@ -2248,10 +2353,19 @@ document.querySelectorAll('.btn-copy').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     const id = btn.dataset.id;
     const url = `${window.location.href.split('#')[0]}#issue-${id}`;
+    const isAm = document.documentElement.classList.contains('am');
+    const msg = isAm
+      ? `ሰላም! ይህን ችግር ተመልከት: ${url}\n\nፕላትፎርሙን ዝርዝር ሞክሬ ብዙ ሳንካዎች፣ ማሻሻያዎችና ደህንነት ችግሮች አግኝቼያለሁ። ይህ version 2 ላይ ያለ ጥልቅ ምርምር ነው። ቀላል የሚስተካከሉ ወይም የሚሻሻሉ ናቸው።`
+      : `Hi! Check out this issue I found: ${url}\n\nI was testing the platform in detail and found several bugs, improvements and security issues. I went deeply into version 2 — these are all fixable. Happy to discuss any of them.`;
     navigator.clipboard.writeText(url).then(()=>{
-      showToast(isAM() ? 'ተቀድቷል!' : 'Copied!');
+      showToast(isAm ? 'ተቀድቷል! Telegram ይከፈታል…' : 'Copied! Opening Telegram…');
+      setTimeout(()=>{
+        const tgUrl = `https://t.me/stoiclife2?text=${encodeURIComponent(msg)}`;
+        window.open(tgUrl, '_blank', 'noopener');
+      }, 800);
     }).catch(()=>{
-      showToast('Copied!');
+      const tgUrl = `https://t.me/stoiclife2?text=${encodeURIComponent(msg)}`;
+      window.open(tgUrl, '_blank', 'noopener');
     });
   });
 });
@@ -2363,6 +2477,107 @@ langBtn.addEventListener('click', ()=>{
   };
 })();
 </script>
+
+<!-- ══ SITE FOOTER ════════════════════════════════════ -->
+<footer id="site-footer">
+  <div class="footer-inner">
+
+    <!-- Brand -->
+    <div class="footer-col-left">
+      <div class="footer-brand">FX<span>League</span></div>
+      <p class="footer-tagline">
+        <span data-en>A detailed QA audit of the FXLeag trading platform — 21 issues documented with screenshots, severity ratings, and fix recommendations.</span>
+        <span data-am>የFXLeag ንግድ ፕላትፎርም ዝርዝር QA ምርመራ — 21 ችግሮች በቅጽበታዊ ምስሎች፣ ክብደቶች፣ እና የማስተካከያ ምክሮች ተዘርዝረዋል።</span>
+      </p>
+    </div>
+
+    <!-- Summary stats -->
+    <div class="footer-col-mid">
+      <div class="footer-col-title">
+        <span data-en>Issue Summary</span><span data-am>ጉዳዮች ማጠቃለያ</span>
+      </div>
+      <div class="footer-stats-row">
+        <span class="footer-stat-pill">
+          <span class="pill-dot" style="background:#FF4444"></span>
+          <span data-en>8 Critical</span><span data-am>8 አስቸኳይ</span>
+        </span>
+        <span class="footer-stat-pill">
+          <span class="pill-dot" style="background:#FF8C00"></span>
+          <span data-en>4 High</span><span data-am>4 ከፍተኛ</span>
+        </span>
+        <span class="footer-stat-pill">
+          <span class="pill-dot" style="background:#FFD700"></span>
+          <span data-en>5 Medium</span><span data-am>5 መካከለኛ</span>
+        </span>
+        <span class="footer-stat-pill">
+          <span class="pill-dot" style="background:#22C55E"></span>
+          <span data-en>4 Low</span><span data-am>4 ዝቅተኛ</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Tester profile — subtle, natural -->
+    <div class="footer-col-right">
+      <div class="footer-col-title">
+        <span data-en>About the Tester</span>
+        <span data-am>ስለ ሞካሪው</span>
+      </div>
+
+      <div class="tester-card">
+        <div class="tester-avatar" aria-hidden="true">
+          <svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="20" fill="rgba(200,245,0,.1)"/><circle cx="20" cy="16" r="7" fill="rgba(200,245,0,.5)"/><path d="M6 36c0-7.732 6.268-14 14-14s14 6.268 14 14" fill="rgba(200,245,0,.3)"/></svg>
+        </div>
+        <div class="tester-info">
+          <span class="tester-name">@stoiclife2</span>
+          <span class="tester-bio">
+            <span data-en>QA tester · Eye for detail · Found 21 issues across security, UX &amp; performance in one deep session.</span>
+            <span data-am>QA ሞካሪ · ዝርዝር አይን · አንድ ጥልቅ ሴሽን ውስጥ 21 ችግሮች ደህንነት፣ UX እና ፍጥነት ላይ አግኝቷል።</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="tester-skills">
+        <span class="skill-pill">QA Testing</span>
+        <span class="skill-pill">Security Audit</span>
+        <span class="skill-pill">UX Review</span>
+        <span class="skill-pill">Bug Reporting</span>
+      </div>
+
+      <a id="tg-widget" href="https://t.me/stoiclife2" target="_blank" rel="noopener" aria-label="Message on Telegram">
+        <div class="tg-pulse"></div>
+        <div class="tg-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.667l-2.95-.924c-.64-.203-.658-.64.135-.954l11.57-4.461c.537-.194 1.006.131.97.893z"/></svg>
+        </div>
+        <div class="tg-text">
+          <span class="tg-label">Telegram</span>
+          <span class="tg-name">@stoiclife2</span>
+          <span class="tg-sub">
+            <span data-en>Open to discuss any finding</span>
+            <span data-am>ስለ ማንኛውም ግኝት ለመወያየት ዝግጁ ነኝ</span>
+          </span>
+        </div>
+      </a>
+    </div>
+
+  </div>
+
+  <!-- Bottom bar -->
+  <div class="footer-bottom">
+    <p class="footer-copy">
+      © <span>2026</span> FX<span>League</span>
+      <span data-en>&nbsp;— QA Bug Report. All findings are for improvement purposes only.</span>
+      <span data-am>&nbsp;— QA ስህተት ሪፖርት። ሁሉም ግኝቶች ለማሻሻያ ዓላማ ብቻ ናቸው።</span>
+    </p>
+    <div class="footer-links">
+      <a href="#issue-1" data-en>First Issue</a>
+      <a href="#issue-1" data-am>የመጀመሪያ ጉዳይ</a>
+      <a href="https://t.me/stoiclife2" target="_blank" rel="noopener">Telegram</a>
+      <a href="#" onclick="window.print();return false;">
+        <span data-en>Print / PDF</span><span data-am>አትም / PDF</span>
+      </a>
+    </div>
+  </div>
+</footer>
 
 </body>
 </html>
