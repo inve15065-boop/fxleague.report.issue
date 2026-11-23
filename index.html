@@ -1,0 +1,2368 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>FXLeag — QA Bug Report</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap');
+
+/* ── CSS VARIABLES ───────────────────────────────────── */
+:root {
+  --bg:       #0A0A0A;
+  --surface:  #111111;
+  --surface2: #1A1A1A;
+  --accent:   #C8F500;
+  --text:     #FFFFFF;
+  --text2:    #AAAAAA;
+  --border:   rgba(255,255,255,0.08);
+  --critical: #FF4444;
+  --high:     #FF8C00;
+  --medium:   #FFD700;
+  --low:      #22C55E;
+  --tag-sec:  #FF8C00;
+  --tag-bug:  #FF4444;
+  --tag-imp:  #22C55E;
+  --tag-ux:   #3B82F6;
+  --radius:   12px;
+  --shadow:   0 4px 24px rgba(0,0,0,0.4);
+}
+html.light {
+  --bg:      #F5F5F3;
+  --surface: #FFFFFF;
+  --surface2:#EEEEEC;
+  --accent:  #7AA800;
+  --text:    #0A0A0A;
+  --text2:   #555555;
+  --border:  rgba(0,0,0,0.08);
+  --shadow:  0 4px 24px rgba(0,0,0,0.12);
+}
+
+/* ── RESET & BASE ────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  line-height:1.6;
+  overflow-x:hidden;
+  transition:background .3s,color .3s;
+}
+html.am body{font-family:'Noto Sans Ethiopic','Inter',sans-serif}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:inherit}
+img{max-width:100%;display:block}
+
+/* language visibility */
+html.am [data-en]{display:none!important}
+html:not(.am) [data-am]{display:none!important}
+
+/* ── OPENING ANIMATION ───────────────────────────────── */
+#intro-curtain{
+  position:fixed;inset:0;z-index:9999;
+  background:#000;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:24px;
+  pointer-events:none;
+  transition:opacity .6s ease .2s;
+}
+#intro-curtain.hidden{opacity:0;pointer-events:none}
+#intro-curtain.gone{display:none}
+
+#intro-chart{width:min(500px,80vw);height:120px;overflow:visible}
+#chart-line{
+  fill:none;
+  stroke:var(--accent);
+  stroke-width:2.5;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  stroke-dasharray:600;
+  stroke-dashoffset:600;
+  animation:drawChart 1.8s cubic-bezier(.4,0,.2,1) .3s forwards;
+}
+#chart-glow{
+  fill:none;
+  stroke:var(--accent);
+  stroke-width:6;
+  opacity:.18;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  stroke-dasharray:600;
+  stroke-dashoffset:600;
+  animation:drawChart 1.8s cubic-bezier(.4,0,.2,1) .3s forwards;
+  filter:blur(4px);
+}
+@keyframes drawChart{to{stroke-dashoffset:0}}
+
+#intro-headline{
+  text-align:center;
+  opacity:0;
+  transform:translateY(28px);
+  animation:slideUp .7s ease 1.6s forwards;
+}
+#intro-headline h1{font-size:clamp(1.6rem,4vw,2.8rem);font-weight:800;letter-spacing:-.03em}
+#intro-headline h1 span{color:var(--accent)}
+#intro-headline p{color:#888;font-size:.95rem;margin-top:4px}
+@keyframes slideUp{to{opacity:1;transform:translateY(0)}}
+
+/* ── STICKY TOOLBAR ──────────────────────────────────── */
+#toolbar{
+  position:sticky;top:0;z-index:900;
+  background:rgba(10,10,10,.92);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  padding:10px 20px;
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+  transition:background .3s;
+}
+html.light #toolbar{background:rgba(245,245,243,.93)}
+
+.filter-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.filter-tab{
+  padding:6px 14px;border-radius:999px;border:1px solid var(--border);
+  background:transparent;color:var(--text2);font-size:.82rem;font-weight:500;
+  transition:all .2s;white-space:nowrap;
+}
+.filter-tab:hover{border-color:var(--accent);color:var(--accent)}
+.filter-tab.active{background:var(--accent);color:#000;border-color:var(--accent)}
+
+#search-wrap{position:relative;flex:1;min-width:140px;max-width:280px}
+#search-input{
+  width:100%;padding:7px 12px 7px 36px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:999px;color:var(--text);font-size:.85rem;
+  outline:none;transition:border .2s;
+}
+#search-input:focus{border-color:var(--accent)}
+#search-wrap::before{
+  content:'⌕';position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  color:var(--text2);font-size:1rem;pointer-events:none;
+}
+#search-hint{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:4px;padding:1px 6px;font-size:.72rem;color:var(--text2);
+  pointer-events:none;
+}
+
+#sort-select{
+  padding:7px 12px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:999px;color:var(--text);font-size:.82rem;outline:none;
+  cursor:pointer;transition:border .2s;
+}
+#sort-select:focus{border-color:var(--accent)}
+
+.toolbar-btn{
+  padding:7px 14px;border-radius:999px;border:1px solid var(--border);
+  background:transparent;color:var(--text);font-size:.82rem;
+  transition:all .2s;white-space:nowrap;
+}
+.toolbar-btn:hover{border-color:var(--accent);color:var(--accent)}
+#critical-btn{border-color:var(--critical);color:var(--critical)}
+#critical-btn:hover{background:var(--critical);color:#fff}
+#critical-btn.active{background:var(--critical);color:#fff}
+
+.toolbar-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+
+/* ── HEADER ──────────────────────────────────────────── */
+#header{
+  padding:60px 24px 40px;
+  max-width:1200px;margin:0 auto;
+  text-align:center;
+}
+#header h2{font-size:clamp(1.8rem,4vw,3rem);font-weight:800;letter-spacing:-.03em;line-height:1.15}
+#header h2 span{color:var(--accent)}
+#header p.subtitle{color:var(--text2);margin-top:10px;font-size:1rem}
+
+/* stat tiles */
+.stat-tiles{
+  display:flex;flex-wrap:wrap;gap:14px;justify-content:center;
+  margin-top:36px;
+}
+.stat-tile{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px 28px;
+  min-width:120px;cursor:pointer;
+  transition:border-color .2s,transform .15s,box-shadow .2s;
+  position:relative;overflow:hidden;
+}
+.stat-tile::before{
+  content:'';position:absolute;inset:0;
+  background:var(--accent);opacity:0;transition:opacity .2s;
+  border-radius:inherit;
+}
+.stat-tile:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 28px rgba(200,245,0,.12)}
+.stat-tile.active{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.stat-tile .tile-num{font-size:2.2rem;font-weight:800;line-height:1;color:var(--accent)}
+.stat-tile .tile-num.critical{color:var(--critical)}
+.stat-tile .tile-label{font-size:.78rem;color:var(--text2);margin-top:4px;font-weight:500;text-transform:uppercase;letter-spacing:.06em}
+
+/* ── DONUT CHART ─────────────────────────────────────── */
+#chart-section{
+  max-width:700px;margin:48px auto 0;
+  padding:0 24px;
+  display:flex;align-items:center;justify-content:center;
+  gap:48px;flex-wrap:wrap;
+}
+#donut-svg{width:200px;height:200px;flex-shrink:0}
+.donut-segment{
+  fill:none;stroke-width:32;
+  stroke-linecap:butt;
+  transition:stroke-width .2s,filter .2s;
+  cursor:pointer;
+}
+.donut-segment:hover{stroke-width:36;filter:brightness(1.2)}
+.donut-hole-text{font-size:28px;font-weight:800;fill:var(--text);font-family:'Inter',sans-serif}
+.donut-hole-sub{font-size:11px;fill:var(--text2);font-family:'Inter',sans-serif}
+
+.chart-legend{display:flex;flex-direction:column;gap:12px}
+.legend-item{
+  display:flex;align-items:center;gap:10px;cursor:pointer;
+  padding:8px 14px;border-radius:8px;border:1px solid transparent;
+  transition:border-color .2s,background .2s;
+}
+.legend-item:hover{border-color:var(--border);background:var(--surface)}
+.legend-item.active{border-color:var(--accent);background:var(--surface)}
+.legend-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
+.legend-label{font-size:.88rem;font-weight:500;min-width:70px}
+.legend-count{margin-left:auto;font-size:.88rem;font-weight:700;color:var(--text2)}
+
+/* ── TICKER ──────────────────────────────────────────── */
+#ticker-wrap{
+  overflow:hidden;border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  margin:40px 0 0;padding:12px 0;
+  position:relative;background:var(--surface);
+}
+#ticker-wrap::before,#ticker-wrap::after{
+  content:'';position:absolute;top:0;bottom:0;width:80px;z-index:2;pointer-events:none;
+}
+#ticker-wrap::before{left:0;background:linear-gradient(to right,var(--surface),transparent)}
+#ticker-wrap::after{right:0;background:linear-gradient(to left,var(--surface),transparent)}
+#ticker-track{
+  display:flex;gap:0;width:max-content;
+  animation:ticker 60s linear infinite;
+}
+#ticker-wrap:hover #ticker-track{animation-play-state:paused}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ticker-item{
+  display:flex;align-items:center;gap:8px;
+  padding:0 32px;white-space:nowrap;font-size:.82rem;color:var(--text2);
+}
+.ticker-item .tick-num{color:var(--accent);font-weight:700;font-size:.75rem}
+.ticker-item .tick-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+/* ── CARD GRID ───────────────────────────────────────── */
+#grid-section{max-width:1200px;margin:0 auto;padding:40px 24px 80px}
+#no-results{
+  text-align:center;padding:80px 20px;color:var(--text2);
+  font-size:1.1rem;display:none;
+}
+.card-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
+  gap:24px;
+}
+
+/* ── ISSUE CARD ──────────────────────────────────────── */
+.issue-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;
+  transition:border-color .25s,transform .2s,box-shadow .25s;
+  opacity:0;transform:translateY(30px);
+  will-change:transform,opacity;
+  position:relative;
+}
+.issue-card.visible{opacity:1;transform:translateY(0);transition:opacity .5s ease,transform .5s ease,border-color .25s,box-shadow .25s}
+.issue-card:hover{border-color:rgba(200,245,0,.3);box-shadow:0 8px 40px rgba(0,0,0,.35)}
+
+/* image gallery */
+.card-gallery{position:relative;aspect-ratio:16/9;background:#000;overflow:hidden}
+.card-gallery img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  opacity:0;transition:opacity .4s;cursor:zoom-in;
+}
+.card-gallery img.active{opacity:1}
+.gallery-placeholder{
+  width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+  background:var(--surface2);color:var(--text2);font-size:.85rem;
+  flex-direction:column;gap:8px;
+}
+.gallery-placeholder svg{opacity:.3}
+.gallery-nav{
+  position:absolute;top:50%;transform:translateY(-50%);
+  background:rgba(0,0,0,.55);border:none;color:#fff;
+  width:36px;height:36px;border-radius:50%;font-size:1rem;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .2s;z-index:5;
+}
+.gallery-nav:hover{background:rgba(0,0,0,.85)}
+.gallery-nav.prev{left:10px}
+.gallery-nav.next{right:10px}
+.gallery-dots{
+  position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+  display:flex;gap:5px;z-index:5;
+}
+.gallery-dot{
+  width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.4);
+  border:none;padding:0;transition:background .2s;cursor:pointer;
+}
+.gallery-dot.active{background:#fff}
+
+/* card body */
+.card-body{padding:20px}
+
+.card-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.card-num{
+  min-width:36px;height:36px;border-radius:8px;
+  background:var(--accent);color:#000;
+  font-weight:800;font-size:.85rem;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.card-title-wrap{flex:1}
+.card-title{font-size:1.05rem;font-weight:700;line-height:1.3;cursor:pointer}
+.card-title:hover{color:var(--accent)}
+
+.card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.tag{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:.05em;
+}
+.tag-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.tag.bug{background:rgba(255,68,68,.15);color:var(--tag-bug);border:1px solid rgba(255,68,68,.25)}
+.tag.security{background:rgba(255,140,0,.15);color:var(--tag-sec);border:1px solid rgba(255,140,0,.25)}
+.tag.improve{background:rgba(34,197,94,.15);color:var(--tag-imp);border:1px solid rgba(34,197,94,.25)}
+.tag.ux{background:rgba(59,130,246,.15);color:var(--tag-ux);border:1px solid rgba(59,130,246,.25)}
+
+/* severity meter */
+.sev-meter{margin-bottom:14px}
+.sev-label-row{display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:5px}
+.sev-label{font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.sev-label.critical{color:var(--critical)}
+.sev-label.high{color:var(--high)}
+.sev-label.medium{color:var(--medium)}
+.sev-label.low{color:var(--low)}
+.sev-bar-track{height:5px;background:var(--surface2);border-radius:999px;overflow:hidden}
+.sev-bar{height:100%;border-radius:999px;transition:width .6s ease}
+.sev-bar.critical{width:100%;background:var(--critical)}
+.sev-bar.high{width:75%;background:var(--high)}
+.sev-bar.medium{width:50%;background:var(--medium)}
+.sev-bar.low{width:25%;background:var(--low)}
+
+/* desc & fix */
+.card-desc{font-size:.88rem;color:var(--text2);line-height:1.65;margin-bottom:14px}
+.card-fix{
+  border:1px solid rgba(200,245,0,.3);border-radius:10px;
+  padding:12px 14px;background:rgba(200,245,0,.05);
+  display:flex;gap:10px;align-items:flex-start;
+}
+.fix-icon{font-size:1rem;flex-shrink:0;margin-top:1px}
+.fix-text{font-size:.84rem;line-height:1.6;color:var(--text2)}
+.fix-text strong{color:var(--accent);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px}
+
+/* card footer */
+.card-footer{
+  display:flex;align-items:center;gap:8px;padding:12px 20px;
+  border-top:1px solid var(--border);
+}
+.btn-expand,.btn-copy{
+  padding:6px 14px;border-radius:999px;font-size:.78rem;font-weight:600;
+  border:1px solid var(--border);background:transparent;color:var(--text2);
+  transition:all .2s;
+}
+.btn-expand:hover{border-color:var(--accent);color:var(--accent)}
+.btn-copy:hover{border-color:var(--accent);color:var(--accent)}
+.btn-expand{margin-left:auto}
+
+/* ── TOAST ───────────────────────────────────────────── */
+#toast{
+  position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--accent);color:#000;padding:10px 24px;border-radius:999px;
+  font-size:.85rem;font-weight:700;z-index:9998;
+  opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .25s;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── MODAL ───────────────────────────────────────────── */
+#modal-overlay{
+  position:fixed;inset:0;z-index:9000;
+  background:rgba(0,0,0,.85);backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .3s;
+  padding:20px;
+}
+#modal-overlay.open{opacity:1;pointer-events:all}
+#modal-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;max-width:800px;width:100%;
+  max-height:90vh;overflow-y:auto;
+  transform:scale(.95) translateY(20px);
+  transition:transform .3s,opacity .3s;
+  position:relative;
+}
+#modal-overlay.open #modal-box{transform:scale(1) translateY(0)}
+#modal-close{
+  position:sticky;top:0;float:right;
+  margin:16px 16px 0 0;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:50%;width:36px;height:36px;
+  font-size:1.1rem;color:var(--text);
+  display:flex;align-items:center;justify-content:center;
+  z-index:10;transition:background .2s;
+}
+#modal-close:hover{background:var(--critical);color:#fff}
+#modal-content{padding:28px 32px 32px;clear:both}
+#modal-nav{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:16px 24px;border-top:1px solid var(--border);
+  position:sticky;bottom:0;background:var(--surface);
+}
+.modal-nav-btn{
+  padding:8px 20px;border-radius:999px;border:1px solid var(--border);
+  background:transparent;color:var(--text);font-size:.85rem;
+  transition:all .2s;display:flex;align-items:center;gap:6px;
+}
+.modal-nav-btn:hover{border-color:var(--accent);color:var(--accent)}
+#modal-counter{font-size:.82rem;color:var(--text2)}
+
+/* modal content reuses card styles but bigger */
+#modal-content .card-title{font-size:1.4rem;cursor:default}
+#modal-content .card-title:hover{color:var(--text)}
+#modal-content .card-desc{font-size:.95rem}
+#modal-content .fix-text{font-size:.9rem}
+
+/* ── LIGHTBOX ────────────────────────────────────────── */
+#lightbox{
+  position:fixed;inset:0;z-index:9500;
+  background:rgba(0,0,0,.95);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .3s;
+}
+#lightbox.open{opacity:1;pointer-events:all}
+#lightbox img{max-width:94vw;max-height:92vh;object-fit:contain;border-radius:8px}
+#lightbox-close{
+  position:absolute;top:20px;right:24px;
+  background:rgba(255,255,255,.12);border:none;color:#fff;
+  width:40px;height:40px;border-radius:50%;font-size:1.3rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .2s;
+}
+#lightbox-close:hover{background:rgba(255,255,255,.25)}
+
+/* ── PRINT ───────────────────────────────────────────── */
+@media print{
+  #toolbar,#intro-curtain,#ticker-wrap,#modal-overlay,#lightbox,
+  #toast,.card-footer,.btn-expand,.btn-copy,#chart-section{display:none!important}
+  body{background:#fff;color:#000}
+  .issue-card{opacity:1!important;transform:none!important;break-inside:avoid;margin-bottom:20px;border:1px solid #ddd}
+  .card-grid{display:block}
+  .issue-card.hidden{display:block!important}
+}
+
+/* ── REDUCED MOTION ──────────────────────────────────── */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
+  #intro-curtain{display:none!important}
+  .issue-card{opacity:1!important;transform:none!important}
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────── */
+@media(max-width:900px){
+  .card-grid{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+  #chart-section{gap:28px}
+}
+@media(max-width:600px){
+  .card-grid{grid-template-columns:1fr}
+  #toolbar{padding:8px 12px}
+  .toolbar-right{margin-left:0}
+  #header{padding:40px 16px 28px}
+  #modal-content{padding:20px 18px 24px}
+}
+
+/* ── SCROLLBAR ───────────────────────────────────────── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--border)}
+
+/* ── MUSIC PLAYER ────────────────────────────────────── */
+#music-player{
+  position:fixed;bottom:24px;right:24px;z-index:8000;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:999px;padding:8px 16px 8px 10px;
+  display:flex;align-items:center;gap:10px;
+  box-shadow:0 8px 32px rgba(0,0,0,.45);
+  backdrop-filter:blur(12px);
+  transition:all .3s cubic-bezier(.22,1,.36,1);
+  user-select:none;
+}
+#music-player:hover{
+  border-color:var(--accent);
+  box-shadow:0 8px 32px rgba(200,245,0,.15);
+}
+html.light #music-player{
+  background:rgba(255,255,255,.95);
+  box-shadow:0 8px 32px rgba(0,0,0,.12);
+}
+#music-play-btn{
+  width:34px;height:34px;border-radius:50%;
+  background:var(--accent);border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:transform .15s,background .2s;
+}
+#music-play-btn:hover{transform:scale(1.08)}
+#music-play-btn:active{transform:scale(.96)}
+#music-play-btn svg{width:14px;height:14px;fill:#000}
+.music-info{display:flex;flex-direction:column;gap:1px;min-width:0}
+.music-title{
+  font-size:11px;font-weight:700;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;
+}
+html.light .music-title{color:#0A0A0A}
+.music-sub{font-size:10px;color:var(--text2);white-space:nowrap}
+.music-wave{display:flex;align-items:center;gap:2px;height:16px}
+.music-wave span{
+  display:block;width:3px;border-radius:2px;background:var(--accent);
+  transform-origin:bottom;
+}
+.music-wave span:nth-child(1){height:6px;animation:wave 1s ease-in-out infinite .0s}
+.music-wave span:nth-child(2){height:12px;animation:wave 1s ease-in-out infinite .15s}
+.music-wave span:nth-child(3){height:8px;animation:wave 1s ease-in-out infinite .3s}
+.music-wave span:nth-child(4){height:14px;animation:wave 1s ease-in-out infinite .1s}
+.music-wave span:nth-child(5){height:5px;animation:wave 1s ease-in-out infinite .25s}
+@keyframes wave{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.9)}}
+#music-player.paused .music-wave span{animation-play-state:paused}
+#music-vol{
+  -webkit-appearance:none;appearance:none;
+  width:60px;height:3px;border-radius:2px;
+  background:var(--border);outline:none;cursor:pointer;
+}
+#music-vol::-webkit-slider-thumb{
+  -webkit-appearance:none;width:12px;height:12px;
+  border-radius:50%;background:var(--accent);cursor:pointer;
+}
+@media(max-width:480px){
+  #music-player{bottom:16px;right:16px;padding:7px 12px 7px 8px}
+  .music-title{max-width:110px}
+  #music-vol{width:44px}
+}
+@media(prefers-reduced-motion:reduce){
+  .music-wave span{animation:none !important}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ OPENING ANIMATION ══════════════════════════════ -->
+<div id="intro-curtain" aria-hidden="true">
+  <svg id="intro-chart" viewBox="0 0 500 120" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="cg" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#C8F500" stop-opacity="0"/>
+        <stop offset="100%" stop-color="#C8F500" stop-opacity="1"/>
+      </linearGradient>
+    </defs>
+    <path id="chart-glow"
+      d="M0,90 L30,80 L60,85 L90,70 L120,72 L150,55 L180,60 L200,45 L220,50 L250,30 L270,38 L300,20 L330,28 L360,12 L400,18 L440,8 L480,4 L500,2"/>
+    <path id="chart-line"
+      d="M0,90 L30,80 L60,85 L90,70 L120,72 L150,55 L180,60 L200,45 L220,50 L250,30 L270,38 L300,20 L330,28 L360,12 L400,18 L440,8 L480,4 L500,2"/>
+  </svg>
+  <div id="intro-headline">
+    <h1>FX<span>Leag</span> Bug Report</h1>
+    <p data-en>QA Analysis — 21 Issues Found</p>
+    <p data-am>የQA ትንታኔ — 21 ጉዳዮች ተገኝተዋል</p>
+  </div>
+</div>
+
+<!-- ══ TOAST ══════════════════════════════════════════ -->
+<div id="toast" role="status" aria-live="polite">Copied!</div>
+
+<!-- ══ STICKY TOOLBAR ══════════════════════════════════ -->
+<nav id="toolbar" role="navigation" aria-label="Filters">
+  <div class="filter-tabs" role="tablist">
+    <button class="filter-tab active" data-filter="all" role="tab" aria-selected="true">
+      <span data-en>All</span><span data-am>ሁሉም</span>
+    </button>
+    <button class="filter-tab" data-filter="bug" role="tab" aria-selected="false">
+      <span data-en>Bugs</span><span data-am>ሳንካዎች</span>
+    </button>
+    <button class="filter-tab" data-filter="security" role="tab" aria-selected="false">
+      <span data-en>Security</span><span data-am>ደህንነት</span>
+    </button>
+    <button class="filter-tab" data-filter="improve" role="tab" aria-selected="false">
+      <span data-en>Improvements</span><span data-am>ማሻሻያዎች</span>
+    </button>
+    <button class="filter-tab" data-filter="ux" role="tab" aria-selected="false">
+      <span data-en>UX</span><span data-am>UX</span>
+    </button>
+  </div>
+
+  <div id="search-wrap">
+    <input id="search-input" type="search" placeholder="Search issues…" aria-label="Search issues"/>
+    <span id="search-hint">/</span>
+  </div>
+
+  <select id="sort-select" aria-label="Sort order">
+    <option value="number" data-en>Sort: Number</option>
+    <option value="severity" data-en>Sort: Severity</option>
+  </select>
+
+  <button id="critical-btn" class="toolbar-btn" aria-pressed="false">
+    🔴 <span data-en>Critical First</span><span data-am>ወሳኝ አስቀድም</span>
+  </button>
+
+  <div class="toolbar-right">
+    <button id="print-btn" class="toolbar-btn" onclick="window.print()" title="Print / Save PDF">
+      🖨 <span data-en>Print</span><span data-am>አትም</span>
+    </button>
+    <button id="theme-btn" class="toolbar-btn" aria-label="Toggle theme">🌙</button>
+    <button id="lang-btn" class="toolbar-btn" aria-label="Toggle language">🇬🇧 EN</button>
+  </div>
+</nav>
+
+<!-- ══ HEADER ════════════════════════════════════════ -->
+<header id="header">
+  <h2>
+    <span data-en>FX<span style="color:var(--accent)">Leag</span> QA Report</span>
+    <span data-am>FX<span style="color:var(--accent)">Leag</span> የQA ሪፖርት</span>
+  </h2>
+  <p class="subtitle">
+    <span data-en>Full quality assurance audit — trading platform issue tracker</span>
+    <span data-am>ሙሉ የጥራት ማረጋገጫ ምርመራ — የትሬዲንግ ፕላትፎርም ሳንካ መዝጊያ</span>
+  </p>
+
+  <div class="stat-tiles">
+    <div class="stat-tile" data-tile="all" role="button" tabindex="0" aria-label="Total issues: 21">
+      <div class="tile-num" id="cnt-total">0</div>
+      <div class="tile-label"><span data-en>Total Issues</span><span data-am>ጠቅላላ ጉዳዮች</span></div>
+    </div>
+    <div class="stat-tile" data-tile="bug" role="button" tabindex="0" aria-label="Bugs: 14">
+      <div class="tile-num" id="cnt-bugs">0</div>
+      <div class="tile-label"><span data-en>Bugs</span><span data-am>ሳንካዎች</span></div>
+    </div>
+    <div class="stat-tile" data-tile="improve" role="button" tabindex="0" aria-label="Improvements: 7">
+      <div class="tile-num" id="cnt-imp">0</div>
+      <div class="tile-label"><span data-en>Improvements</span><span data-am>ማሻሻያዎች</span></div>
+    </div>
+    <div class="stat-tile" data-tile="security" role="button" tabindex="0" aria-label="Security: 8">
+      <div class="tile-num" id="cnt-sec">0</div>
+      <div class="tile-label"><span data-en>Security</span><span data-am>ደህንነት</span></div>
+    </div>
+    <div class="stat-tile" data-tile="critical" role="button" tabindex="0" aria-label="Critical: 8">
+      <div class="tile-num critical" id="cnt-crit">0</div>
+      <div class="tile-label"><span data-en>Critical</span><span data-am>ወሳኝ</span></div>
+    </div>
+  </div>
+</header>
+
+<!-- ══ DONUT CHART ════════════════════════════════════ -->
+<section id="chart-section" aria-label="Severity distribution">
+  <svg id="donut-svg" viewBox="0 0 200 200" role="img" aria-label="Donut chart of severity counts">
+    <circle cx="100" cy="100" r="70" fill="var(--surface)"/>
+    <!-- segments drawn by JS -->
+    <g id="donut-segs"></g>
+    <text x="100" y="96" text-anchor="middle" class="donut-hole-text" id="donut-center-num">21</text>
+    <text x="100" y="113" text-anchor="middle" class="donut-hole-sub" id="donut-center-label">Total</text>
+  </svg>
+
+  <div class="chart-legend">
+    <div class="legend-item" data-sev="critical" role="button" tabindex="0">
+      <div class="legend-dot" style="background:var(--critical)"></div>
+      <div class="legend-label">
+        <span data-en>Critical</span><span data-am>ወሳኝ</span>
+      </div>
+      <div class="legend-count">7</div>
+    </div>
+    <div class="legend-item" data-sev="high" role="button" tabindex="0">
+      <div class="legend-dot" style="background:var(--high)"></div>
+      <div class="legend-label">
+        <span data-en>High</span><span data-am>ከፍተኛ</span>
+      </div>
+      <div class="legend-count">4</div>
+    </div>
+    <div class="legend-item" data-sev="medium" role="button" tabindex="0">
+      <div class="legend-dot" style="background:var(--medium)"></div>
+      <div class="legend-label">
+        <span data-en>Medium</span><span data-am>መካከለኛ</span>
+      </div>
+      <div class="legend-count">5</div>
+    </div>
+    <div class="legend-item" data-sev="low" role="button" tabindex="0">
+      <div class="legend-dot" style="background:var(--low)"></div>
+      <div class="legend-label">
+        <span data-en>Low</span><span data-am>ዝቅተኛ</span>
+      </div>
+      <div class="legend-count">4</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TICKER ════════════════════════════════════════ -->
+<div id="ticker-wrap" aria-hidden="true">
+  <div id="ticker-track"><!-- populated by JS --></div>
+</div>
+
+<!-- ══ GRID SECTION ══════════════════════════════════ -->
+<main id="grid-section">
+  <div id="no-results">
+    <span data-en>No issues match your filter.</span>
+    <span data-am>ምንም ጉዳይ ማጣሪያዎን አያሟላም።</span>
+  </div>
+  <div class="card-grid" id="card-grid">
+
+<!-- ══ CARD #1 ══════════════════════════════════════ -->
+<article class="issue-card" id="issue-1" data-tags="bug,ux" data-severity="low" data-num="1">
+  <div class="card-gallery">
+    <img src="no1.jpg" alt="Issue 1 screenshot" class="active" loading="lazy"/>
+    <div class="gallery-placeholder" style="display:none"></div>
+  </div>
+  <div class="card-body">
+    <div class="card-top">
+      <div class="card-num">#1</div>
+      <div class="card-title-wrap">
+        <div class="card-title" role="button" tabindex="0">
+          <span data-en>Logo has no pointer cursor</span>
+          <span data-am>ሎጎ ሲጫኑ የጣት ምልክት አይወጣም</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-tags">
+      <span class="tag bug"><span class="tag-dot" style="background:var(--tag-bug)"></span><span data-en>Bug</span><span data-am>ሳንካ</span></span>
+      <span class="tag ux"><span class="tag-dot" style="background:var(--tag-ux)"></span>UX</span>
+    </div>
+    <div class="sev-meter">
+      <div class="sev-label-row">
+        <span class="sev-label low"><span data-en>Low</span><span data-am>ዝቅተኛ</span></span>
+      </div>
+      <div class="sev-bar-track"><div class="sev-bar low"></div></div>
+    </div>
+    <p class="card-desc">
+      <span data-en>Clicking the FXLeag logo navigates home but the cursor never changes to a pointer on hover. Users have no visual cue the logo is clickable.</span>
+      <span data-am>የFXLeag ሎጎን ሲጫኑ ወደ መነሻ ይሄዳሉ፤ ነገር ግን ጣቱ ሲቀርብ የጣት ምልክት አይታይም። ሎጎው ሊጫን የሚችል መሆኑን ተጠቃሚዎቹ አያውቁም።</span>
+    </p>
+    <div class="card-fix">
+      <span class="fix-icon">✅</span>
+      <div class="fix-text">
+        <strong><span data-en>Fix</span><span data-am>መፍትሔ</span></strong>
+        <span data-en>Add <code>cursor:pointer</code> to the logo CSS — one line of code.</span>
+        <span data-am><code>cursor:pointer</code> ወደ ሎጎው CSS ያክሉ — አንድ መስመር ብቻ ነው።</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn-copy" data-id="1">🔗 <span data-en>Copy link</span><span data-am>አገናኝ ቅዳ</span></button>
+    <button class="btn-expand" data-id="1">⤢ <span data-en>Expand</span><span data-am>አስፋ</span></button>
+  </div>
+</article>
+
+<!-- ══ CARD #2 ══════════════════════════════════════ -->
+<article class="issue-card" id="issue-2" data-tags="security,bug" data-severity="critical" data-num="2">
+  <div class="card-gallery">
+    <img src="no2.jpg" alt="Issue 2 screenshot" class="active" loading="lazy"/>
+  </div>
+  <div class="card-body">
+    <div class="card-top">
+      <div class="card-num">#2</div>
+      <div class="card-title-wrap">
+        <div class="card-title" role="button" tabindex="0">
+          <span data-en>Dashboard accessible without login</span>
+          <span data-am>ዳሽቦርድ ሳይገቡ ይከፈታል</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-tags">
+      <span class="tag security"><span class="tag-dot" style="background:var(--tag-sec)"></span><span data-en>Security</span><span data-am>ደህንነት</span></span>
+      <span class="tag bug"><span class="tag-dot" style="background:var(--tag-bug)"></span><span data-en>Bug</span><span data-am>ሳንካ</span></span>
+    </div>
+    <div class="sev-meter">
+      <div class="sev-label-row">
+        <span class="sev-label critical"><span data-en>Critical</span><span data-am>ወሳኝ</span></span>
+      </div>
+      <div class="sev-bar-track"><div class="sev-bar critical"></div></div>
+    </div>
+    <p class="card-desc">
+      <span data-en>The Dashboard link on the landing page opens the full dashboard without any authentication. Any visitor can bypass login and view private data.</span>
+      <span data-am>ዋና ገጹ ላይ ያለው ዳሽቦርድ አዝራር ሳይገቡ ሙሉ ዳሽቦርዱን ይከፍታል። ማንኛውም ጎብኚ ምስጢር ማየት ይችላል።</span>
+    </p>
+    <div class="card-fix">
+      <span class="fix-icon">✅</span>
+      <div class="fix-text">
+        <strong><span data-en>Fix</span><span data-am>መፍትሔ</span></strong>
+        <span data-en>Add an auth guard on the dashboard route. Redirect unauthenticated visitors to login, then back after sign-in.</span>
+        <span data-am>ዳሽቦርዱን ወደ ሚጎቡ ሁሉ ምርመራ ያስቀምጡ። ያልገቡ ሰዎች ወደ ሎጊን ይላኩ፤ ከዚያ ተመልሰው ይምጡ።</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn-copy" data-id="2">🔗 <span data-en>Copy link</span><span data-am>አገናኝ ቅዳ</span></button>
+    <button class="btn-expand" data-id="2">⤢ <span data-en>Expand</span><span data-am>አስፋ</span></button>
+  </div>
+</article>
+
+<!-- ══ CARD #3 ══════════════════════════════════════ -->
+<article class="issue-card" id="issue-3" data-tags="bug,ux" data-severity="medium" data-num="3">
+  <div class="card-gallery">
+    <img src="no3.jpg" alt="Issue 3 screenshot" class="active" loading="lazy"/>
+  </div>
+  <div class="card-body">
+    <div class="card-top">
+      <div class="card-num">#3</div>
+      <div class="card-title-wrap">
+        <div class="card-title" role="button" tabindex="0">
+          <span data-en>No Back button on login page</span>
+          <span data-am>ወደ ኋላ የሚመልስ አዝራር የለም</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-tags">
+      <span class="tag bug"><span class="tag-dot" style="background:var(--tag-bug)"></span><span data-en>Bug</span><span data-am>ሳንካ</span></span>
+      <span class="tag ux"><span class="tag-dot" style="background:var(--tag-ux)"></span>UX</span>
+    </div>
+    <div class="sev-meter">
+      <div class="sev-label-row">
+        <span class="sev-label medium"><span data-en>Medium</span><span data-am>መካከለኛ</span></span>
+      </div>
+      <div class="sev-bar-track"><div class="sev-bar medium"></div></div>
+    </div>
+    <p class="card-desc">
+      <span data-en>There is no way back to home from the login screen. Users who want to re-read instructions are stranded — forced to refresh or use the browser back button.</span>
+      <span data-am>ከሎጊን ገጽ ወደ መነሻ ለመመለስ መንገድ የለም። መመሪያዎቹን ለማንበብ ፈልጎ ያልሄደ ሰው ተጣብቆ ይቀራል።</span>
+    </p>
+    <div class="card-fix">
+      <span class="fix-icon">✅</span>
+      <div class="fix-text">
+        <strong><span data-en>Fix</span><span data-am>መፍትሔ</span></strong>
+        <span data-en>Add a "← Back to Home" link in the top-left corner of the login page.</span>
+        <span data-am>"← ወደ መነሻ" አዝራር ከሎጊን ፎርሙ ላይኛ ግራ ማዕዘን ያስቀምጡ።</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn-copy" data-id="3">🔗 <span data-en>Copy link</span><span data-am>አገናኝ ቅዳ</span></button>
+    <button class="btn-expand" data-id="3">⤢ <span data-en>Expand</span><span data-am>አስፋ</span></button>
+  </div>
+</article>
+
+<!-- ══ CARD #4 ══════════════════════════════════════ -->
+<article class="issue-card" id="issue-4" data-tags="security,bug" data-severity="critical" data-num="4">
+  <div class="card-gallery">
+    <img src="no4.jpg" alt="Issue 4 screenshot" class="active" loading="lazy"/>
+  </div>
+  <div class="card-body">
+    <div class="card-top">
+      <div class="card-num">#4</div>
+      <div class="card-title-wrap">
+        <div class="card-title" role="button" tabindex="0">
+          <span data-en>Certificate downloads before course completion</span>
+          <span data-am>ሰርተፊኬት ኮርሱ ሳይጠናቀቅ ይወርዳል</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-tags">
+      <span class="tag security"><span class="tag-dot" style="background:var(--tag-sec)"></span><span data-en>Security</span><span data-am>ደህንነት</span></span>
+      <span class="tag bug"><span class="tag-dot" style="background:var(--tag-bug)"></span><span data-en>Bug</span><span data-am>ሳንካ</span></span>
+    </div>
+    <div class="sev-meter">
+      <div class="sev-label-row">
+        <span class="sev-label critical"><span data-en>Critical</span><span data-am>ወሳኝ</span></span>
+      </div>
+      <div class="sev-bar-track"><div class="sev-bar critical"></div></div>
+    </div>
+    <p class="card-desc">
+      <span data-en>The certificate download button is active before the course is finished. Anyone can get it on day one — making it completely worthless.</span>
+      <span data-am>የሰርተፊኬት ወረዳ አዝራሩ ኮርሱ ሳይጠናቀቅ ይሰራል። ማንኛውም ሰው ቀን ሲጀምር ሊወርደው ይችላል — ሰርተፊኬቱ ትርጉም አልባ ይሆናል።</span>
+    </p>
+    <div class="card-fix">
+      <span class="fix-icon">✅</span>
+      <div class="fix-text">
+        <strong><span data-en>Fix</span><span data-am>መፍትሔ</span></strong>
+        <span data-en>Lock the download with a server-side 100% completion check. Disable the button until the backend confirms the course is done.</span>
+        <span data-am>ሰርቨሩ 100% ማጠናቀቅ ሲያረጋግጥ ብቻ ያስወርዱ። ይህ ምርመራ ሁልጊዜ ከሰርቨር ጎን ሊሆን ይገባዋል።</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn-copy" data-id="4">🔗 <span data-en>Copy link</span><span data-am>አገናኝ ቅዳ</span></button>
+    <button class="btn-expand" data-id="4">⤢ <span data-en>Expand</span><span data-am>አስፋ</span></button>
+  </div>
+</article>
+
+<!-- ══ CARD #5 ══════════════════════════════════════ -->
+<article class="issue-card" id="issue-5" data-tags="bug" data-severity="high" data-num="5">
+  <div class="card-gallery">
+    <img src="no5.jpg" alt="Issue 5 screenshot" class="active" loading="lazy"/>
+  </div>
+  <div class="card-body">
+    <div class="card-top">
+      <div class="card-num">#5</div>
+      <div class="card-title-wrap">
+        <div class="card-title" role="button" tabindex="0">
+          <span data-en>Email button opens OS app-picker, not Gmail</span>
+          <span data-am>ኢሜይል አዝራሩ Gmail አይከፍትም</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-tags">
+      <span class="tag bug"><span class="tag-dot" style="background:var(--tag-bug)"></span><span data-en>Bug</span><span data-am>ሳንካ</span></span>
+    </div>
+    <div class="sev-meter">
+      <div class="sev-label-row">
+        <span class="sev-label high"><span data-en>High</span><span data-am>ከፍተኛ</span></span>
+      </div>
+      <div class="sev-bar-track"><div class="sev-bar high"></div></div>
+    </div>
+    <p class="card-desc">
+      <span data-en>Clicking the contact email button opens the OS app-picker dialog. After choosing an app nothing loads — the contact flow is fully broken.</span>
+      <span data-am>ኢሜይሉን ሲጫኑ የስርዓቱ መተግበሪያ ምርጫ ይወጣል። ምን ቢመርጡ ምንም አይከፈትም — ፈጽሞ አይሰራም።</span>
+    </p>
+    <div class="card-fix">
+      <span class="fix-icon">✅</span>
+      <div class="fix-text">
+        <strong><span data-en>Fix</span><span data-am>መፍትሔ</span></strong>
+        <span data-en>Use a plain <code>mailto:</code> link or embed an on-page contact form so no external app is needed.</span>
+        <span data-am>ቀላል <code>mailto:</code> አገናኝ ይጠቀሙ ወይም በቀጥታ ሳይቱ ላይ ቅጽ ያስቀምጡ።</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn-copy" data-id="5">🔗 <span data-en>Copy link</span><span data-am>አገናኝ ቅዳ</span></button>
+    <button class="btn-expand" data-id="5">⤢ <span data-en>Expand</span><span data-am>አስፋ</span></button>
+  </div>
+</article>
+
+<!-- ══ CARD #6 ══════════════════════════════════════ -->
+<article class="issue-card" id="issue-6" data-tags="security,bug" data-severity="critical" data-num="6">
+  <div class="card-gallery">
+    <img src="no6.jpg" alt="Issue 6 screenshot" class="active" loading="lazy"/>
+  </div>
+  <div class="card-body">
+    <div class="card-top">
+      <div class="card-num">#6</div>
+      <div class="card-title-wrap">
+        <div class="card-title" role="button" tabindex="0">
+          <span data-en>Numbers-only password accepted</span>
+          <span data-am>ቁጥር ብቻ ያለ ፓስወርድ ይፈቀዳል</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-tags">
+      <span class="tag security"><span class="tag-dot" style="background:var(--tag-sec)"></span><span data-en>Security</span><span data-am>ደህንነት</span></span>
+      <span class="tag bug"><span class="tag-dot" style="background:var(--tag-bug)"></span><span data-en>Bug</span><span data-am>ሳንካ</span></span>
+    </div>
+    <div class="sev-meter">
+      <div class="sev-label-row">
+        <span class="sev-label critical"><span data-en>Critical</span><span data-am>ወሳኝ</span></span>
+      </div>
+      <div class="sev-bar-track"><div class="sev-bar critical"></div></div>
+    </div>
+    <p class="card-desc">
+      <span data-en>Registration accepts a password made entirely of numbers (e.g. 123456). Zero complexity requirement — every account is trivially easy to brute-force.</span>
+      <span data-am>ምዝገባ ፎርሙ ፓስወርዱ ሙሉ ቁጥር ቢሆን ይፈቅዳል (ለምሳሌ 123456)። ምንም ጥንካሬ አያስፈልግም — ሁሉም መለያ በቀላሉ ሊጠቃ ይችላል።</span>
+    </p>
+    <div class="card-fix">
+      <span class="fix-icon">✅</span>
+      <div class="fix-text">
+        <strong><span data-en>Fix</span><span data-am>መፍትሔ</span></strong>
+        <span data-en>Require minimum 8 characters mixing uppercase, lowercase, numbers, and symbols. Show a live strength bar.</span>
+        <span data-am>ቢያንስ 8 ፊደላት፤ ትልቅ፣ ትንሽ ፊደል፣ ቁጥርና ምልክት ይጠይቁ። ቀጥታ ጥንካሬ አመልካች ያሳዩ።</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn-copy" data-id="6">🔗 <span data-en>Copy link</span><span data-am>አገናኝ ቅዳ</span></button>
+    <button class="btn-expand" data-id="6">⤢ <span data-en>Expand</span><span data-am>አስፋ</span></button>
+  </div>
+</article>
+
+<!-- ══ CARD #7 (multi-image) ════════════════════════ -->
+<article class="issue-card" id="issue-7" data-tags="security,bug" data-severity="critical" data-num="7">
+  <div class="card-gallery" data-gallery="7">
+    <img src="no7.jpg" alt="Issue 7 screenshot 1" class="active" loading="lazy"/>
+    <img src="no7(1).jpg" alt="Issue 7 screenshot 2" loading="lazy"/>
+    <button class="gallery-nav prev" aria-label="Previous image">&#8249;</button>
+    <button class="gallery-nav next" aria-label="Next image">&#8250;</button>
+    <div class="gallery-dots">
+      <button class="gallery-dot active" aria-label="Image 1"></button>
+      <button class="gallery-dot" aria-label="Image 2"></button>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="card-top">
+      <div class="card-num">#7</div>
+      <div class="card-title-wrap">
+        <div class="card-title" role="button" tabindex="0">
+          <span data-en>Fake email accepted at registration</span>
+          <span data-am>የሐሰት ኢሜይል ምዝገባ ይፈቀዳል</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-tags">
+      <span class="tag security"><span class="tag-dot" style="background:var(--tag-sec)"></span><span data-en>Security</span><span data-am>ደህንነት</span></span>
+      <span class="tag bug"><span class="tag-dot" style="background:var(--tag-bug)"></span><span data-en>Bug</span><span data-am>ሳንካ</span></span>
+    </div>
+    <div class="sev-meter">
+      <div class="sev-label-row">
+        <span class="sev-label critical"><span data-en>Critical</span><span data-am>ወሳኝ</span></span>
+      </div>
+      <div class="sev-bar-track"><div class="sev-bar critical"></div></div>
+    </div>
+    <p class="card-desc">
+      <span data-en>A generated or non-existent email passes registration. Fake-email accounts cannot be recovered and let spammers flood the system.</span>
+      <span data-am>የሐሰት ወይም የሌለ ኢሜይል ምዝገባ ያልፋል። እነዚህ መለያዎች አይመለሱም፤ ስፓምን ያስፋፋሉ።</span>
+    </p>
+    <div class="card-fix">
+      <span class="fix-icon">✅</span>
+      <div class="fix-text">
+        <strong><span data-en>Fix</span><span data-am>መፍትሔ</span></strong>
+        <span data-en>Send a one-time verification link on registration. Block login until the email is confirmed.</span>
+        <span data-am>ምዝገባ ሲደረግ አንድ ጊዜ ብቻ የሚሰራ አረጋጋጭ አገናኝ ይላኩ። ኢሜይሉ እስኪረጋገጥ ድረስ ሎጊን ይዘጉ።</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn-copy" data-id="7">🔗 <span data-en>Copy link</span><span data-am>አገናኝ ቅዳ</span></button>
+    <button class="btn-expand" data-id="7">⤢ <span data-en>Expand</span><span data-am>አስፋ</span></button>
+  </div>
+</article>
+
+<!-- ══ CARD #8 ══════════════════════════════════════ -->
+<article class="issue-card" id="issue-8" data-tags="bug" data-severity="high" data-num="8">
+  <div class="card-gallery">
+    <img src="no8.jpg" alt="Issue 8 screenshot" class="active" loading="lazy"/>
+  </div>
+  <div class="card-body">
+    <div class="card-top">
+      <div class="card-num">#8</div>
+      <div class="card-title-wrap">
+        <div class="card-title" role="button" tabindex="0">
+          <span data-en>Country field allows manual edit</span>
+          <span data-am>የሀገር መስክ ሊቀየር ይችላል</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-tags">
+      <span class="tag bug"><span class="tag-dot" style="background:var(--tag-bug)"></span><span data-en>Bug</span><span data-am>ሳንካ</span></span>
+    </div>
+    <div class="sev-meter">
+      <div class="sev-label-row">
+        <span class="sev-label high"><span data-en>High</span><span data-am>ከፍተኛ</span></span>
+      </div>
+      <div class="sev-bar-track"><div class="sev-bar high"></div></div>
+    </div>
+    <p class="card-desc">
+      <span data-en>The profile country field is freely editable. Any user can change their country, undermining regional compliance and accurate analytics.</span>
+      <span data-am>የመገለጫ ሀገር መስክ ማንኛውም ሰው ሊቀይረው ይችላል። ይህ ሀገራዊ ደንቦችን ያበላሻል።</span>
+    </p>
+    <div class="card-fix">
+      <span class="fix-icon">✅</span>
+      <div class="fix-text">
+        <strong><span data-en>Fix</span><span data-am>መፍትሔ</span></strong>
+        <span data-en>Auto-detect country from IP at registration and lock the field to read-only.</span>
+        <span data-am>ምዝገባ ሲደረግ ሀገሩን ከIP ይለዩ፤ መስኩን ለማንበብ ብቻ ያድርጉት።</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn-copy" data-id="8">🔗 <span data-en>Copy link</span><span data-am>አገናኝ ቅዳ</span></button>
+    <button class="btn-expand" data-id="8">⤢ <span data-en>Expand</span><span data-am>አስፋ</span></button>
+  </div>
+</article>
+
+<!-- ══ CARD #9 ══════════════════════════════════════ -->
+<article class="issue-card" id="issue-9" data-tags="improve,ux" data-severity="medium" data-num="9">
+  <div class="card-gallery">
+    <img src="no9.jpg" alt="Issue 9 screenshot" class="active" loading="lazy"/>
+  </div>
+  <div class="card-body">
+    <div class="card-top">
+      <div class="card-num">#9</div>
+      <div class="card-title-wrap">
+        <div class="card-title" role="button" tabindex="0">
+          <span data-en>Navigation needs expandable sub-menus</span>
+          <span data-am>ናቪጌሽን ሊዘረጋ የሚችል ንዑስ ምናሌ ያስፈልገዋል</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-tags">
+      <span class="tag improve"><span class="tag-dot" style="background:var(--tag-imp)"></span><span data-en>Improvement</span><span data-am>ማሻሻያ</span></span>
+      <span class="tag ux"><span class="tag-dot" style="background:var(--tag-ux)"></span>UX</span>
+    </div>
+    <div class="sev-meter">
+      <div class="sev-label-row">
+        <span class="sev-label medium"><span data-en>Medium</span><span data-am>መካከለኛ</span></span>
+      </div>
+      <div class="sev-bar-track"><div class="sev-bar medium"></div></div>
+    </div>
+    <p class="card-desc">
+      <span data-en>The navigation shows all links at once — cluttered and overwhelming. Apps like TikTok only show top-level sections; clicking one expands its children inline.</span>
+      <span data-am>ናቪጌሽኑ ሁሉንም አገናኞች አንድ ጊዜ ያሳያል — ሞልቶ ይታያል። TikTok ዋና ክፍሎቹን ብቻ ያሳያል፤ ሲጫኑ ንዑሶቹ ይዘረጋሉ።</span>
+    </p>
+    <div class="card-fix">
+      <span class="fix-icon">✅</span>
+      <div class="fix-text">
+        <strong><span data-en>Fix</span><span data-am>መፍትሔ</span></strong>
+        <span data-en>Group nav into top-level sections (Tools, Learn, Profile). Each expands on click and collapses when another opens.</span>
+        <span data-am>ናቪጌሽኑን ወደ ዋና ምድቦች ይከፋፍሉ (መሳሪያዎች፣ ትምህርት፣ መገለጫ)። ሲጫኑ ይዘረጋ፤ ሌላ ሲጫኑ ይዘጋ።</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn-copy" data-id="9">🔗 <span data-en>Copy link</span><span data-am>አገናኝ ቅዳ</span></button>
+    <button class="btn-expand" data-id="9">⤢ <span data-en>Expand</span><span data-am>አስፋ</span></button>
+  </div>
+</article>
+
+<!-- ══ CARD #10 ══════════════════════════════════════ -->
+<article class="issue-card" id="issue-10" data-tags="improve,ux" data-severity="medium" data-num="10">
+  <div class="card-gallery">
+    <img src="no10.jpg" alt="Issue 10 screenshot" class="active" loading="lazy"/>
+  </div>
+  <div class="card-body">
+    <div class="card-top">
+      <div class="card-num">#10</div>
+      <div class="card-title-wrap">
+        <div class="card-title" role="button" tabindex="0">
+          <span data-en>No "Continue with Google" sign-in</span>
+          <span data-am>"በGoogle ቀጥሉ" አማራጭ የለም</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-tags">
+      <span class="tag improve"><span class="tag-dot" style="background:var(--tag-imp)"></span><span data-en>Improvement</span><span data-am>ማሻሻያ</span></span>
+      <span class="tag ux"><span class="tag-dot" style="background:var(--tag-ux)"></span>UX</span>
+    </div>
+    <div class="sev-meter">
+      <div class="sev-label-row">
+        <span class="sev-label medium"><span data-en>Medium</span><span data-am>መካከለኛ</span></span>
+      </div>
+      <div class="sev-bar-track"><div class="sev-bar medium"></div></div>
+    </div>
+    <p class="card-desc">
+      <span data-en>No social sign-in on login or registration. "Continue with Google" is a baseline expectation on modern platforms — it removes friction and increases sign-ups.</span>
+      <span data-am>ሎጊን ወይም ምዝገባ ላይ ማህበራዊ ፈጣን መግቢያ የለም። "በGoogle ቀጥሉ" ዘመናዊ ፕላትፎርሞች ሁሉ ያሉት ነው።</span>
+    </p>
+    <div class="card-fix">
+      <span class="fix-icon">✅</span>
+      <div class="fix-text">
+        <strong><span data-en>Fix</span><span data-am>መፍትሔ</span></strong>
+        <span data-en>Integrate Google OAuth 2.0. Add the official "Continue with Google" button above the email form on both pages.</span>
+        <span data-am>Google OAuth 2.0 ያዋህዱ። ሎጊን እና ምዝገባ ሁለቱ ላይ "በGoogle ቀጥሉ" አዝራር ያስቀምጡ።</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn-copy" data-id="10">🔗 <span data-en>Copy link</span><span data-am>አገናኝ ቅዳ</span></button>
+    <button class="btn-expand" data-id="10">⤢ <span data-en>Expand</span><span data-am>አስፋ</span></button>
+  </div>
+</article>
+
+<!-- ══ CARD #11 ══════════════════════════════════════ -->
+<article class="issue-card" id="issue-11" data-tags="improve,ux" data-severity="low" data-num="11">
+  <div class="card-gallery">
+    <img src="no11.jpg" alt="Issue 11 screenshot" class="active" loading="lazy"/>
+  </div>
+  <div class="card-body">
+    <div class="card-top">
+      <div class="card-num">#11</div>
+      <div class="card-title-wrap">
+        <div class="card-title" role="button" tabindex="0">
+          <span data-en>AI responses are too complex to read</span>
+          <span data-am>የAI ምላሾች ለማንበብ ከብዶ ይታያሉ</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-tags">
+      <span class="tag improve"><span class="tag-dot" style="background:var(--tag-imp)"></span><span data-en>Improvement</span><span data-am>ማሻሻያ</span></span>
+      <span class="tag ux"><span class="tag-dot" style="background:var(--tag-ux)"></span>UX</span>
+    </div>
+    <div class="sev-meter">
+      <div class="sev-label-row">
+        <span class="sev-label low"><span data-en>Low</span><span data-am>ዝቅተኛ</span></span>
+      </div>
+      <div class="sev-bar-track"><div class="sev-bar low"></div></div>
+    </div>
+    <p class="card-desc">
+      <span data-en>The AI assistant's answers are accurate but heavy headers, dense paragraphs, and nested bullets make them feel like a textbook.</span>
+      <span data-am>የAI ምላሾቹ ትክክል ናቸው፤ ነገር ግን ቅርጸቱ ከባድ ርዕሶች፣ ጥቅጥቅ አንቀጾች — እንደ ትምህርት መጽሐፍ ይሰማቸዋል።</span>
+    </p>
+    <div class="card-fix">
+      <span class="fix-icon">✅</span>
+      <div class="fix-text">
+        <strong><span data-en>Fix</span><span data-am>መፍትሔ</span></strong>
+        <span data-en>Update the AI system prompt to reply in short plain sentences. Bullet points only for lists. Tone like a knowledgeable friend.</span>
+        <span data-am>AI ሲስተም ፕሮምፕቱን አጭር ቀላል ዓረፍተ ነገር እንዲጠቀም ያዘምኑ። ቃናው እንደ ጓደኛ ሊሰማ ይገባዋል።</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn-copy" data-id="11">🔗 <span data-en>Copy link</span><span data-am>አገናኝ ቅዳ</span></button>
+    <button class="btn-expand" data-id="11">⤢ <span data-en>Expand</span><span data-am>አስፋ</span></button>
+  </div>
+</article>
+
+<!-- ══ CARD #12 ══════════════════════════════════════ -->
+<article class="issue-card" id="issue-12" data-tags="bug,ux" data-severity="medium" data-num="12">
+  <div class="card-gallery">
+    <img src="no12.jpg" alt="Issue 12 screenshot" class="active" loading="lazy"/>
+  </div>
+  <div class="card-body">
+    <div class="card-top">
+      <div class="card-num">#12</div>
+      <div class="card-title-wrap">
+        <div class="card-title" role="button" tabindex="0">
+          <span data-en>Notifications can only be cleared all at once</span>
+          <span data-am>ማሳወቂያዎች አንድ ጊዜ ሁሉ ብቻ ይጸዳሉ</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-tags">
+      <span class="tag bug"><span class="tag-dot" style="background:var(--tag-bug)"></span><span data-en>Bug</span><span data-am>ሳንካ</span></span>
+      <span class="tag ux"><span class="tag-dot" style="background:var(--tag-ux)"></span>UX</span>
+    </div>
+    <div class="sev-meter">
+      <div class="sev-label-row">
+        <span class="sev-label medium"><span data-en>Medium</span><span data-am>መካከለኛ</span></span>
+      </div>
+      <div class="sev-bar-track"><div class="sev-bar medium"></div></div>
+    </div>
+    <p class="card-desc">
+      <span data-en>The notification center only has "Clear All". Users must either keep every notification or delete everything — including important ones.</span>
+      <span data-am>ማሳወቂያ ማዕከሉ "ሁሉንም ጥረግ" ብቻ አለው። ሁሉንም ማቆየት ወይም ሁሉንም ማጥፋት ብቻ ነው።</span>
+    </p>
+    <div class="card-fix">
+      <span class="fix-icon">✅</span>
+      <div class="fix-text">
+        <strong><span data-en>Fix</span><span data-am>መፍትሔ</span></strong>
+        <span data-en>Add an individual dismiss (×) button to every notification. Keep "Clear All" as a secondary option.</span>
+        <span data-am>እያንዳንዱ ማሳወቂያ ላይ የራሱ × (ዝጋ) አዝራር ያክሉ። "ሁሉንም ጥረግ" እንደ ሁለተኛ አማራጭ ይቆይ።</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn-copy" data-id="12">🔗 <span data-en>Copy link</span><span data-am>አገናኝ ቅዳ</span></button>
+    <button class="btn-expand" data-id="12">⤢ <span data-en>Expand</span><span data-am>አስፋ</span></button>
+  </div>
+</article>
+
+<!-- ══ CARD #13 (multi-image) ════════════════════════ -->
+<article class="issue-card" id="issue-13" data-tags="improve,ux" data-severity="high" data-num="13">
+  <div class="card-gallery" data-gallery="13">
+    <img src="no13.jpg" alt="Issue 13 screenshot 1" class="active" loading="lazy"/>
+    <img src="no13(1).jpg" alt="Issue 13 screenshot 2" loading="lazy"/>
+    <img src="no13(2).jpg" alt="Issue 13 screenshot 3" loading="lazy"/>
+    <button class="gallery-nav prev" aria-label="Previous image">&#8249;</button>
+    <button class="gallery-nav next" aria-label="Next image">&#8250;</button>
+    <div class="gallery-dots">
+      <button class="gallery-dot active" aria-label="Image 1"></button>
+      <button class="gallery-dot" aria-label="Image 2"></button>
+      <button class="gallery-dot" aria-label="Image 3"></button>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="card-top">
+      <div class="card-num">#13</div>
+      <div class="card-title-wrap">
+        <div class="card-title" role="button" tabindex="0">
+          <span data-en>Navigation sidebar is always visible</span>
+          <span data-am>ናቪጌሽን ሳይድባር ሁልጊዜ ክፍት ነው</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-tags">
+      <span class="tag improve"><span class="tag-dot" style="background:var(--tag-imp)"></span><span data-en>Improvement</span><span data-am>ማሻሻያ</span></span>
+      <span class="tag ux"><span class="tag-dot" style="background:var(--tag-ux)"></span>UX</span>
+    </div>
+    <div class="sev-meter">
+      <div class="sev-label-row">
+        <span class="sev-label high"><span data-en>High</span><span data-am>ከፍተኛ</span></span>
+      </div>
+      <div class="sev-bar-track"><div class="sev-bar high"></div></div>
+    </div>
+    <p class="card-desc">
+      <span data-en>The sidebar is always open and cannot be hidden. It permanently consumes screen space — especially bad on mobile.</span>
+      <span data-am>ሳይድባሩ ሁልጊዜ ክፍት ነው፤ ሊዘጋ አይችልም። ቦታ ይበላሉ — በሞባይል ይበልጥ ያስቸግራል።</span>
+    </p>
+    <div class="card-fix">
+      <span class="fix-icon">✅</span>
+      <div class="fix-text">
+        <strong><span data-en>Fix</span><span data-am>መፍትሔ</span></strong>
+        <span data-en>Convert to a toggle-able drawer. The platform logo opens it; clicking again closes it.</span>
+        <span data-am>ሳይድባሩን ሊዘጋ ሊከፈት ወደሚችል drawer ይቀይሩ። ሎጎን ሲጫኑ ይከፈት፤ ሁለተኛ ሲጫኑ ይዘጋ።</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn-copy" data-id="13">🔗 <span data-en>Copy link</span><span data-am>አገናኝ ቅዳ</span></button>
+    <button class="btn-expand" data-id="13">⤢ <span data-en>Expand</span><span data-am>አስፋ</span></button>
+  </div>
+</article>
+
+<!-- ══ CARD #14 (multi-image) ════════════════════════ -->
+<article class="issue-card" id="issue-14" data-tags="security,bug" data-severity="critical" data-num="14">
+  <div class="card-gallery" data-gallery="14">
+    <img src="no14.jpg" alt="Issue 14 screenshot 1" class="active" loading="lazy"/>
+    <img src="no14(1).jpg" alt="Issue 14 screenshot 2" loading="lazy"/>
+    <button class="gallery-nav prev" aria-label="Previous image">&#8249;</button>
+    <button class="gallery-nav next" aria-label="Next image">&#8250;</button>
+    <div class="gallery-dots">
+      <button class="gallery-dot active" aria-label="Image 1"></button>
+      <button class="gallery-dot" aria-label="Image 2"></button>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="card-top">
+      <div class="card-num">#14</div>
+      <div class="card-title-wrap">
+        <div class="card-title" role="button" tabindex="0">
+          <span data-en>Export CSV exposes all users' data</span>
+          <span data-am>CSV ወረዳ የሁሉም ተጠቃሚ መረጃ ያሳያል</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-tags">
+      <span class="tag security"><span class="tag-dot" style="background:var(--tag-sec)"></span><span data-en>Security</span><span data-am>ደህንነት</span></span>
+      <span class="tag bug"><span class="tag-dot" style="background:var(--tag-bug)"></span><span data-en>Bug</span><span data-am>ሳንካ</span></span>
+    </div>
+    <div class="sev-meter">
+      <div class="sev-label-row">
+        <span class="sev-label critical"><span data-en>Critical</span><span data-am>ወሳኝ</span></span>
+      </div>
+      <div class="sev-bar-track"><div class="sev-bar critical"></div></div>
+    </div>
+    <p class="card-desc">
+      <span data-en>The CSV export downloads every user's data, not just the logged-in user's. This is a critical privacy breach — users can see other people's trading records.</span>
+      <span data-am>CSV ወረዳ የሁሉም ተጠቃሚ መረጃ ያወርዳል — የተጠቃሚው ብቻ ሳይሆን። ይህ ከባድ ግላዊነት ጥሰት ነው።</span>
+    </p>
+    <div class="card-fix">
+      <span class="fix-icon">✅</span>
+      <div class="fix-text">
+        <strong><span data-en>Fix</span><span data-am>መፍትሔ</span></strong>
+        <span data-en>The export API must filter by <code>user_id = current_user.id</code> at database level. Client-side filtering is not acceptable.</span>
+        <span data-am>ወረዳ API <code>user_id = current_user.id</code> በዳታቤዝ ደረጃ ማጣሪያ ሊኖረው ይገባዋል።</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn-copy" data-id="14">🔗 <span data-en>Copy link</span><span data-am>አገናኝ ቅዳ</span></button>
+    <button class="btn-expand" data-id="14">⤢ <span data-en>Expand</span><span data-am>አስፋ</span></button>
+  </div>
+</article>
+
+<!-- ══ CARD #15 (no image) ════════════════════════════ -->
+<article class="issue-card" id="issue-15" data-tags="bug,ux" data-severity="critical" data-num="15">
+  <div class="card-gallery">
+    <div class="gallery-placeholder">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <span data-en>No screenshot available</span>
+      <span data-am>ምስል የለም</span>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="card-top">
+      <div class="card-num">#15</div>
+      <div class="card-title-wrap">
+        <div class="card-title" role="button" tabindex="0">
+          <span data-en>No "Forgot Password" link on login</span>
+          <span data-am>"ፓስወርድ ረሳሁ" አገናኝ የለም</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-tags">
+      <span class="tag bug"><span class="tag-dot" style="background:var(--tag-bug)"></span><span data-en>Bug</span><span data-am>ሳንካ</span></span>
+      <span class="tag ux"><span class="tag-dot" style="background:var(--tag-ux)"></span>UX</span>
+    </div>
+    <div class="sev-meter">
+      <div class="sev-label-row">
+        <span class="sev-label critical"><span data-en>Critical</span><span data-am>ወሳኝ</span></span>
+      </div>
+      <div class="sev-bar-track"><div class="sev-bar critical"></div></div>
+    </div>
+    <p class="card-desc">
+      <span data-en>The login page has no "Forgot your password?" link. If a user forgets their password there is no self-service recovery — they are locked out permanently.</span>
+      <span data-am>ሎጊን ገጹ "ፓስወርድ ረሳሁ?" አገናኝ የለውም። ፓስወርዱን ቢረሱ ምንም መፍትሔ የለም — ለዘለዓለም ተዘግቶባቸዋል።</span>
+    </p>
+    <div class="card-fix">
+      <span class="fix-icon">✅</span>
+      <div class="fix-text">
+        <strong><span data-en>Fix</span><span data-am>መፍትሔ</span></strong>
+        <span data-en>Add a "Forgot password?" link below the password field. Send a secure reset link to the user's email.</span>
+        <span data-am>"ፓስወርድ ረሳሁ?" አዝራር ከፓስወርድ መስክ ስር ያስቀምጡ። ወደ ተጠቃሚው ኢሜይል ሪሴት አገናኝ ይላኩ።</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn-copy" data-id="15">🔗 <span data-en>Copy link</span><span data-am>አገናኝ ቅዳ</span></button>
+    <button class="btn-expand" data-id="15">⤢ <span data-en>Expand</span><span data-am>አስፋ</span></button>
+  </div>
+</article>
+
+<!-- ══ CARD #16 (no image) ════════════════════════════ -->
+<article class="issue-card" id="issue-16" data-tags="security,bug" data-severity="high" data-num="16">
+  <div class="card-gallery">
+    <div class="gallery-placeholder">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <span data-en>No screenshot available</span>
+      <span data-am>ምስል የለም</span>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="card-top">
+      <div class="card-num">#16</div>
+      <div class="card-title-wrap">
+        <div class="card-title" role="button" tabindex="0">
+          <span data-en>No session timeout — users stay logged in forever</span>
+          <span data-am>የሴሽን መቀነስ የለም — ለዘለዓለም ገብተው ይቀራሉ</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-tags">
+      <span class="tag security"><span class="tag-dot" style="background:var(--tag-sec)"></span><span data-en>Security</span><span data-am>ደህንነት</span></span>
+      <span class="tag bug"><span class="tag-dot" style="background:var(--tag-bug)"></span><span data-en>Bug</span><span data-am>ሳንካ</span></span>
+    </div>
+    <div class="sev-meter">
+      <div class="sev-label-row">
+        <span class="sev-label high"><span data-en>High</span><span data-am>ከፍተኛ</span></span>
+      </div>
+      <div class="sev-bar-track"><div class="sev-bar high"></div></div>
+    </div>
+    <p class="card-desc">
+      <span data-en>After logging in the session never expires. On a shared device anyone who opens the browser later gets full account access.</span>
+      <span data-am>ከገቡ በኋላ ሴሽኑ ፈጽሞ አያበቃም። በጋራ ኮምፒዩተር ላይ ቀጥሎ የሚጠቀም ማንኛውም ሰው ሙሉ መዳረሻ ያገኛል።</span>
+    </p>
+    <div class="card-fix">
+      <span class="fix-icon">✅</span>
+      <div class="fix-text">
+        <strong><span data-en>Fix</span><span data-am>መፍትሔ</span></strong>
+        <span data-en>Set a 30-min inactivity timeout. Warn 2 minutes before. Auto-logout and redirect to login when time is up.</span>
+        <span data-am>30 ደቂቃ ዋ.ቢ. ሲቀር ማስጠንቀቂያ ይስጡ። ጊዜ ሲያልቅ ወደ ሎጊን ያስወጡ።</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn-copy" data-id="16">🔗 <span data-en>Copy link</span><span data-am>አገናኝ ቅዳ</span></button>
+    <button class="btn-expand" data-id="16">⤢ <span data-en>Expand</span><span data-am>አስፋ</span></button>
+  </div>
+</article>
+
+<!-- ══ CARD #17 (no image) ════════════════════════════ -->
+<article class="issue-card" id="issue-17" data-tags="bug,ux" data-severity="medium" data-num="17">
+  <div class="card-gallery">
+    <div class="gallery-placeholder">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <span data-en>No screenshot available</span>
+      <span data-am>ምስል የለም</span>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="card-top">
+      <div class="card-num">#17</div>
+      <div class="card-title-wrap">
+        <div class="card-title" role="button" tabindex="0">
+          <span data-en>Forms have no loading state or submit feedback</span>
+          <span data-am>ቅጾች ሲቀርቡ ምንም ምልክት አያሳዩም</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-tags">
+      <span class="tag bug"><span class="tag-dot" style="background:var(--tag-bug)"></span><span data-en>Bug</span><span data-am>ሳንካ</span></span>
+      <span class="tag ux"><span class="tag-dot" style="background:var(--tag-ux)"></span>UX</span>
+    </div>
+    <div class="sev-meter">
+      <div class="sev-label-row">
+        <span class="sev-label medium"><span data-en>Medium</span><span data-am>መካከለኛ</span></span>
+      </div>
+      <div class="sev-bar-track"><div class="sev-bar medium"></div></div>
+    </div>
+    <p class="card-desc">
+      <span data-en>When a form is submitted nothing visual happens during processing. Users don't know if the button worked so they click it multiple times — causing duplicate submissions.</span>
+      <span data-am>ቅጹ ሲቀርብ ምንም ነገር አይታይም። ተጠቃሚዎቹ አዝራሩ ሰርቷል ወይ አያውቁም — ብዙ ጊዜ ይጫኑታል።</span>
+    </p>
+    <div class="card-fix">
+      <span class="fix-icon">✅</span>
+      <div class="fix-text">
+        <strong><span data-en>Fix</span><span data-am>መፍትሔ</span></strong>
+        <span data-en>On submit: disable the button, show a spinner, change label to "Loading…". On success show green confirmation; on failure show inline red error.</span>
+        <span data-am>ሲቀርብ አዝራሩን ያቦዝኑ፤ spinner ያሳዩ፤ "በመጫን ላይ..." ይበሉ። ሲሳካ አረንጓዴ ምልክት፤ ሲወድቅ ቀይ ስህተት ይሳዩ።</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn-copy" data-id="17">🔗 <span data-en>Copy link</span><span data-am>አገናኝ ቅዳ</span></button>
+    <button class="btn-expand" data-id="17">⤢ <span data-en>Expand</span><span data-am>አስፋ</span></button>
+  </div>
+</article>
+
+<!-- ══ CARD #18 (no image) ════════════════════════════ -->
+<article class="issue-card" id="issue-18" data-tags="improve,ux" data-severity="medium" data-num="18">
+  <div class="card-gallery">
+    <div class="gallery-placeholder">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <span data-en>No screenshot available</span>
+      <span data-am>ምስል የለም</span>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="card-top">
+      <div class="card-num">#18</div>
+      <div class="card-title-wrap">
+        <div class="card-title" role="button" tabindex="0">
+          <span data-en>No custom 404 page for broken links</span>
+          <span data-am>ለተሰበሩ አገናኞች ብጁ 404 ገጽ የለም</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-tags">
+      <span class="tag improve"><span class="tag-dot" style="background:var(--tag-imp)"></span><span data-en>Improvement</span><span data-am>ማሻሻያ</span></span>
+      <span class="tag ux"><span class="tag-dot" style="background:var(--tag-ux)"></span>UX</span>
+    </div>
+    <div class="sev-meter">
+      <div class="sev-label-row">
+        <span class="sev-label medium"><span data-en>Medium</span><span data-am>መካከለኛ</span></span>
+      </div>
+      <div class="sev-bar-track"><div class="sev-bar medium"></div></div>
+    </div>
+    <p class="card-desc">
+      <span data-en>Visiting a URL that doesn't exist shows the browser's raw error page. It looks broken, destroys trust, and gives users no path forward.</span>
+      <span data-am>የሌለ URL ሲጎቡ አሳሹ ጥሬ ስህተት ገጽ ያሳያል። ተዓማኒነት ያጠፋዋል።</span>
+    </p>
+    <div class="card-fix">
+      <span class="fix-icon">✅</span>
+      <div class="fix-text">
+        <strong><span data-en>Fix</span><span data-am>መፍትሔ</span></strong>
+        <span data-en>Build a branded 404 page with the logo, a friendly message, and a clear "Go back to Home" button.</span>
+        <span data-am>ሎጎ፣ ወዳጃዊ መልዕክት፣ እና "ወደ መነሻ ተመለስ" አዝራር ያለው ብጁ 404 ገጽ ይስሩ።</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn-copy" data-id="18">🔗 <span data-en>Copy link</span><span data-am>አገናኝ ቅዳ</span></button>
+    <button class="btn-expand" data-id="18">⤢ <span data-en>Expand</span><span data-am>አስፋ</span></button>
+  </div>
+</article>
+
+<!-- ══ CARD #19 (no image) ════════════════════════════ -->
+<article class="issue-card" id="issue-19" data-tags="security,bug" data-severity="critical" data-num="19">
+  <div class="card-gallery">
+    <div class="gallery-placeholder">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <span data-en>No screenshot available</span>
+      <span data-am>ምስል የለም</span>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="card-top">
+      <div class="card-num">#19</div>
+      <div class="card-title-wrap">
+        <div class="card-title" role="button" tabindex="0">
+          <span data-en>No rate limiting — login open to brute-force attack</span>
+          <span data-am>የሎጊን ሙከራ ቁጥር ያልተወሰነ — ጥቃት ሊሰነዘር ይችላል</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-tags">
+      <span class="tag security"><span class="tag-dot" style="background:var(--tag-sec)"></span><span data-en>Security</span><span data-am>ደህንነት</span></span>
+      <span class="tag bug"><span class="tag-dot" style="background:var(--tag-bug)"></span><span data-en>Bug</span><span data-am>ሳንካ</span></span>
+    </div>
+    <div class="sev-meter">
+      <div class="sev-label-row">
+        <span class="sev-label critical"><span data-en>Critical</span><span data-am>ወሳኝ</span></span>
+      </div>
+      <div class="sev-bar-track"><div class="sev-bar critical"></div></div>
+    </div>
+    <p class="card-desc">
+      <span data-en>There is no limit on login attempts. A bot can automatically try thousands of passwords until it guesses correctly. Combined with weak passwords (#6), every account is at risk.</span>
+      <span data-am>ሎጊን ስንት ጊዜ ቢሞከር ምንም ቁጥጥር የለም። ሮቦት በሺህ ፓስወርዶች ሊሞክር ይችላል። ደካማ ፓስወርድ (#6) ካለ፤ ሁሉም መለያ ስጋት ላይ ነው።</span>
+    </p>
+    <div class="card-fix">
+      <span class="fix-icon">✅</span>
+      <div class="fix-text">
+        <strong><span data-en>Fix</span><span data-am>መፍትሔ</span></strong>
+        <span data-en>Lock the account after 5 failed attempts for 15 minutes. Show "Too many attempts — try again in 15 min." Add CAPTCHA after 3 failures.</span>
+        <span data-am>5 ስህተት ሙከራ ሲሆን 15 ደቂቃ ቆልፉ። "ብዙ ሙከራ — 15 ደቂቃ ቆይ" ብሉ። 3 ስህተት ሲሆን CAPTCHA ያስቀምጡ።</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn-copy" data-id="19">🔗 <span data-en>Copy link</span><span data-am>አገናኝ ቅዳ</span></button>
+    <button class="btn-expand" data-id="19">⤢ <span data-en>Expand</span><span data-am>አስፋ</span></button>
+  </div>
+</article>
+
+<!-- ══ CARD #20 (no image) ════════════════════════════ -->
+<article class="issue-card" id="issue-20" data-tags="improve,ux" data-severity="high" data-num="20">
+  <div class="card-gallery">
+    <div class="gallery-placeholder">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <span data-en>No screenshot available</span>
+      <span data-am>ምስል የለም</span>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="card-top">
+      <div class="card-num">#20</div>
+      <div class="card-title-wrap">
+        <div class="card-title" role="button" tabindex="0">
+          <span data-en>Platform has no language switching — Amharic is needed</span>
+          <span data-am>ፕላትፎርሙ የቋንቋ ቀያሪ የለውም — አማርኛ ያስፈልጋል</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-tags">
+      <span class="tag improve"><span class="tag-dot" style="background:var(--tag-imp)"></span><span data-en>Improvement</span><span data-am>ማሻሻያ</span></span>
+      <span class="tag ux"><span class="tag-dot" style="background:var(--tag-ux)"></span>UX</span>
+    </div>
+    <div class="sev-meter">
+      <div class="sev-label-row">
+        <span class="sev-label high"><span data-en>High</span><span data-am>ከፍተኛ</span></span>
+      </div>
+      <div class="sev-bar-track"><div class="sev-bar high"></div></div>
+    </div>
+    <p class="card-desc">
+      <span data-en>The entire FXLeag platform is English-only. The first and primary users are Ethiopians — the majority are more comfortable in Amharic. A platform that speaks only one language excludes a large part of its audience and directly limits user growth and trust.</span>
+      <span data-am>የFXLeag ፕላትፎርም ሙሉ በሙሉ እንግሊዝኛ ብቻ ነው። የፕላትፎርሙ ዋና ተጠቃሚዎች ኢትዮጵያውያን ናቸው — አብዛኞቹ አማርኛ ይቀናቸዋል። አንድ ቋንቋ ብቻ ያለው ፕላትፎርም ብዙ ተጠቃሚዎቹን ያገላለዋል።</span>
+    </p>
+    <div class="card-fix">
+      <span class="fix-icon">✅</span>
+      <div class="fix-text">
+        <strong><span data-en>Fix</span><span data-am>መፍትሔ</span></strong>
+        <span data-en>Add a language toggle button (EN / አማርኛ) visible on every page in the top nav. Translate all UI text: buttons, labels, errors, instructions, dashboard. Start with the most-used pages: Home, Login, Register, Dashboard.</span>
+        <span data-am>በሁሉ ገጽ ላይ ከላይ ናቪጌሽን ባር ላይ የቋንቋ ቀያሪ አዝራር (EN / አማርኛ) ያክሉ። ሁሉንም UI ጽሑፍ ይተርጉሙ። ከሚዘወተሩ ገጾች ይጀምሩ።</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn-copy" data-id="20">🔗 <span data-en>Copy link</span><span data-am>አገናኝ ቅዳ</span></button>
+    <button class="btn-expand" data-id="20">⤢ <span data-en>Expand</span><span data-am>አስፋ</span></button>
+  </div>
+</article>
+
+
+<!-- ══ CARD #21 ════════════════════════════════════ -->
+<article class="issue-card" id="issue-21" data-tags="security,bug" data-severity="critical" data-num="21">
+  <div class="card-gallery" data-gallery>
+    <img class="active" src="no15.jpg" alt="Issue 21 — 401 API errors flood the console" loading="lazy"/>
+  </div>
+  <div class="card-body">
+    <div class="card-top">
+      <div class="card-num">#21</div>
+      <div class="card-title-wrap">
+        <div class="card-title" role="button" tabindex="0">
+          <span data-en>API flooded with 401 errors &amp; WebSocket timeouts</span>
+          <span data-am>API በ401 ስህተቶች እና WebSocket ችግሮች ተጥለቅልቋል</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-tags">
+      <span class="tag security"><span class="tag-dot" style="background:var(--tag-sec)"></span><span data-en>Security</span><span data-am>ደህንነት</span></span>
+      <span class="tag bug"><span class="tag-dot" style="background:var(--tag-bug)"></span><span data-en>Bug</span><span data-am>ሳንካ</span></span>
+    </div>
+    <div class="sev-meter">
+      <div class="sev-label-row">
+        <span class="sev-label critical"><span data-en>Critical</span><span data-am>ወሳኝ</span></span>
+      </div>
+      <div class="sev-bar-track"><div class="sev-bar critical"></div></div>
+    </div>
+    <p class="card-desc">
+      <span data-en>The browser console on the leaderboard page floods with 200+ errors every session. Every call to <code>api-test.fxleague.com/api/v1/auth/ws-ticket</code> returns HTTP 401 (Unauthorized). WebSocket connections also fail with <code>ERR_CONNECTION_TIMED_OUT</code>. This means the real-time leaderboard never loads, live position updates do not work, and the app silently fails for every user. The errors repeat in a loop — 170+ per session — draining mobile battery and wasting bandwidth.</span>
+      <span data-am>ሊደርቦርድ ገጹ ላይ አሳሹ ኮንሶል በሁሉ ሴሽን 200+ ስህተቶች ያሞላል። <code>api/v1/auth/ws-ticket</code> ለሚደረጉ ሁሉ ጥሪዎች HTTP 401 ምላሽ ይሰጣል። WebSocket ግንኙነቶችም ደጋግመው ይወድቃሉ። ቀጥታ ሊደርቦርድ ውሂቡ ጭራሽ አይጫናም። ስህተቶቹ ደጋግሞ ይሸከረከራሉ — 170+ በሴሽን — ባትሪ ያባክናል።</span>
+    </p>
+    <div class="card-fix">
+      <span class="fix-icon">✅</span>
+      <div class="fix-text">
+        <strong><span data-en>Fix</span><span data-am>መፍትሔ</span></strong>
+        <span data-en>1. Investigate why <code>/auth/ws-ticket</code> returns 401 — the token or session handshake is broken for all users. 2. Add retry backoff so the client does not spam hundreds of failed requests per session. 3. Fix WebSocket reconnection to wait before retrying. 4. Add server monitoring (e.g. Sentry) to alert on 401 spikes before users notice.</span>
+        <span data-am>1. <code>/auth/ws-ticket</code> ለምን 401 እንደሚመልስ ያጣሩ። 2. ደንደኛ ሙከራ ሎጂክ ያክሉ። 3. WebSocket ወዲያው ሳይሆን ቆይቶ እንዲሞክር ያድርጉ። 4. የAPI ስህተቶችን ለማስጠንቀቅ Sentry ያስቀምጡ።</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn-copy" data-id="21">🔗 <span data-en>Copy link</span><span data-am>አገናኝ ቅዳ</span></button>
+    <button class="btn-expand" data-id="21">⤢ <span data-en>Expand</span><span data-am>አስፋ</span></button>
+  </div>
+</article>
+
+  </div><!-- /.card-grid -->
+</main><!-- /#grid-section -->
+
+<!-- ══ MODAL ══════════════════════════════════════════ -->
+<div id="modal-overlay" role="dialog" aria-modal="true" aria-label="Issue detail" aria-hidden="true">
+  <div id="modal-box">
+    <button id="modal-close" aria-label="Close modal">✕</button>
+    <div id="modal-content"></div>
+    <div id="modal-nav">
+      <button class="modal-nav-btn" id="modal-prev">&#8592; <span data-en>Previous</span><span data-am>ቀዳሚ</span></button>
+      <span id="modal-counter"></span>
+      <button class="modal-nav-btn" id="modal-next"><span data-en>Next</span><span data-am>ቀጣይ</span> &#8594;</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LIGHTBOX ══════════════════════════════════════ -->
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer" aria-hidden="true">
+  <button id="lightbox-close" aria-label="Close lightbox">✕</button>
+  <img id="lightbox-img" src="" alt="Full-size screenshot"/>
+</div>
+
+<!-- ══ JAVASCRIPT ═════════════════════════════════════ -->
+<script>
+(function(){
+'use strict';
+
+/* ── DATA ─────────────────────────────────────────── */
+const ISSUES = [
+  {id:1,  en:'Logo has no pointer cursor',                            am:'ሎጎ ሲጫኑ የጣት ምልክት አይወጣም',                        tags:'bug,ux',       sev:'low'},
+  {id:2,  en:'Dashboard accessible without login',                   am:'ዳሽቦርድ ሳይገቡ ይከፈታል',                              tags:'security,bug', sev:'critical'},
+  {id:3,  en:'No Back button on login page',                         am:'ወደ ኋላ የሚመልስ አዝራር የለም',                           tags:'bug,ux',       sev:'medium'},
+  {id:4,  en:'Certificate downloads before course completion',       am:'ሰርተፊኬት ኮርሱ ሳይጠናቀቅ ይወርዳል',                       tags:'security,bug', sev:'critical'},
+  {id:5,  en:'Email button opens OS app-picker, not Gmail',          am:'ኢሜይል አዝራሩ Gmail አይከፍትም',                          tags:'bug',          sev:'high'},
+  {id:6,  en:'Numbers-only password accepted',                       am:'ቁጥር ብቻ ያለ ፓስወርድ ይፈቀዳል',                          tags:'security,bug', sev:'critical'},
+  {id:7,  en:'Fake email accepted at registration',                  am:'የሐሰት ኢሜይል ምዝገባ ይፈቀዳል',                           tags:'security,bug', sev:'critical'},
+  {id:8,  en:'Country field allows manual edit',                     am:'የሀገር መስክ ሊቀየር ይችላል',                             tags:'bug',          sev:'high'},
+  {id:9,  en:'Navigation needs expandable sub-menus',                am:'ናቪጌሽን ሊዘረጋ የሚችል ንዑስ ምናሌ ያስፈልገዋል',                tags:'improve,ux',   sev:'medium'},
+  {id:10, en:'No "Continue with Google" sign-in',                   am:'"በGoogle ቀጥሉ" አማራጭ የለም',                          tags:'improve,ux',   sev:'medium'},
+  {id:11, en:'AI responses are too complex to read',                 am:'የAI ምላሾች ለማንበብ ከብዶ ይታያሉ',                        tags:'improve,ux',   sev:'low'},
+  {id:12, en:'Notifications can only be cleared all at once',        am:'ማሳወቂያዎች አንድ ጊዜ ሁሉ ብቻ ይጸዳሉ',                      tags:'bug,ux',       sev:'medium'},
+  {id:13, en:'Navigation sidebar is always visible',                 am:'ናቪጌሽን ሳይድባር ሁልጊዜ ክፍት ነው',                        tags:'improve,ux',   sev:'high'},
+  {id:14, en:"Export CSV exposes all users' data",                   am:'CSV ወረዳ የሁሉም ተጠቃሚ መረጃ ያሳያል',                     tags:'security,bug', sev:'critical'},
+  {id:15, en:'No "Forgot Password" link on login',                  am:'"ፓስወርድ ረሳሁ" አገናኝ የለም',                            tags:'bug,ux',       sev:'critical'},
+  {id:16, en:'No session timeout — users stay logged in forever',    am:'የሴሽን መቀነስ የለም — ለዘለዓለም ገብተው ይቀራሉ',                tags:'security,bug', sev:'high'},
+  {id:17, en:'Forms have no loading state or submit feedback',       am:'ቅጾች ሲቀርቡ ምንም ምልክት አያሳዩም',                        tags:'bug,ux',       sev:'medium'},
+  {id:18, en:'No custom 404 page for broken links',                 am:'ለተሰበሩ አገናኞች ብጁ 404 ገጽ የለም',                       tags:'improve,ux',   sev:'medium'},
+  {id:19, en:'No rate limiting — login open to brute-force attack',  am:'የሎጊን ሙከራ ቁጥር ያልተወሰነ — ጥቃት ሊሰነዘር ይችላል',           tags:'security,bug', sev:'critical'},
+  {id:20, en:'Platform has no language switching — Amharic is needed',am:'ፕላትፎርሙ የቋንቋ ቀያሪ የለውም — አማርኛ ያስፈልጋል',           tags:'improve,ux',   sev:'high'},
+  {id:21, en:'API flooded with 401 errors & WebSocket timeouts',      am:'API በ401 ስህተቶች እና WebSocket ችግሮች ተጥለቅልቋል',       tags:'security,bug', sev:'critical'}
+];
+
+const SEV_ORDER = {critical:0, high:1, medium:2, low:3};
+const isAM = () => document.documentElement.classList.contains('am');
+
+/* ── INTRO ANIMATION ──────────────────────────────── */
+const curtain = document.getElementById('intro-curtain');
+function runIntro(){
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    curtain && (curtain.style.display='none');
+    startCounters();
+    return;
+  }
+  setTimeout(()=>{
+    if(!curtain) return;
+    curtain.classList.add('hidden');
+    curtain.addEventListener('transitionend', ()=>curtain.classList.add('gone'), {once:true});
+    startCounters();
+  }, 2600);
+}
+runIntro();
+
+/* ── STAT COUNTER ANIMATION ───────────────────────── */
+function animateCount(el, target, duration){
+  const start = performance.now();
+  function step(now){
+    const p = Math.min((now-start)/duration, 1);
+    const ease = 1 - Math.pow(1-p, 3);
+    el.textContent = Math.round(ease * target);
+    if(p < 1) requestAnimationFrame(step);
+    else el.textContent = target;
+  }
+  requestAnimationFrame(step);
+}
+function startCounters(){
+  const counters = [
+    {el: document.getElementById('cnt-total'), val:21},
+    {el: document.getElementById('cnt-bugs'),  val:14},
+    {el: document.getElementById('cnt-imp'),   val:7},
+    {el: document.getElementById('cnt-sec'),   val:8},
+    {el: document.getElementById('cnt-crit'),  val:8}
+  ];
+  counters.forEach(c=>{ if(c.el) animateCount(c.el, c.val, 1200); });
+}
+
+/* ── DONUT CHART ──────────────────────────────────── */
+(function buildDonut(){
+  const segs = document.getElementById('donut-segs');
+  if(!segs) return;
+  const data = [
+    {sev:'critical', count:8, color:'#FF4444'},
+    {sev:'high',     count:4, color:'#FF8C00'},
+    {sev:'medium',   count:5, color:'#FFD700'},
+    {sev:'low',      count:4, color:'#22C55E'}
+  ];
+  const total = 21;
+  const r = 70, cx = 100, cy = 100;
+  const circ = 2 * Math.PI * r; // ≈ 439.82
+  const gap = 3; // px gap between segments
+  // Start at 12 o'clock: dashoffset rotates by (circ * 0.25) + accumulated offset
+  let accumulated = 0;
+
+  data.forEach((d, i) => {
+    const arcLen = (d.count / total) * circ - gap;
+    const offset = circ - accumulated + (circ * 0.25); // 12 o'clock start
+
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx', cx);
+    circle.setAttribute('cy', cy);
+    circle.setAttribute('r', r);
+    circle.setAttribute('fill', 'none');
+    circle.setAttribute('stroke', d.color);
+    circle.setAttribute('stroke-width', '28');
+    circle.setAttribute('class', 'donut-segment');
+    circle.setAttribute('data-sev', d.sev);
+    circle.setAttribute('stroke-dasharray', `${arcLen} ${circ - arcLen}`);
+    circle.setAttribute('stroke-dashoffset', offset);
+    circle.setAttribute('stroke-linecap', 'butt');
+
+    // animate: start collapsed, expand to full arc
+    circle.style.transition = `stroke-dasharray .6s cubic-bezier(.4,0,.2,1) ${i * 0.12}s, opacity .4s ease ${i * 0.12}s`;
+    circle.style.opacity = '0';
+
+    // store final values for animation
+    const finalArr = `${arcLen} ${circ - arcLen}`;
+    circle.setAttribute('stroke-dasharray', `0 ${circ}`);
+    segs.appendChild(circle);
+
+    setTimeout(() => {
+      circle.style.opacity = '1';
+      circle.setAttribute('stroke-dasharray', finalArr);
+    }, 100 + i * 120);
+
+    accumulated += (d.count / total) * circ;
+
+    circle.addEventListener('mouseenter', () => {
+      circle.setAttribute('stroke-width', '34');
+    });
+    circle.addEventListener('mouseleave', () => {
+      circle.setAttribute('stroke-width', '28');
+    });
+    circle.addEventListener('click', () => {
+      filterBySeverity(d.sev);
+    });
+    circle.style.cursor = 'pointer';
+  });
+})();
+
+/* ── TICKER ───────────────────────────────────────── */
+(function buildTicker(){
+  const track = document.getElementById('ticker-track');
+  if(!track) return;
+  const sevColor = {critical:'#FF4444', high:'#FF8C00', medium:'#FFD700', low:'#22C55E'};
+  // Build two copies for seamless loop
+  for(let pass=0; pass<2; pass++){
+    ISSUES.forEach(issue=>{
+      const item = document.createElement('span');
+      item.className = 'ticker-item';
+      item.innerHTML = `<span class="tick-num">#${issue.id}</span>
+        <span class="tick-dot" style="background:${sevColor[issue.sev]}"></span>
+        <span data-en>${issue.en}</span>
+        <span data-am>${issue.am}</span>`;
+      track.appendChild(item);
+    });
+  }
+})();
+
+/* ── INTERSECTION OBSERVER (card fade-in) ─────────── */
+const cardObserver = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+      cardObserver.unobserve(e.target);
+    }
+  });
+}, {threshold: 0.08});
+document.querySelectorAll('.issue-card').forEach(c=>cardObserver.observe(c));
+
+/* ── PARALLAX TILT ────────────────────────────────── */
+document.querySelectorAll('.issue-card').forEach(card=>{
+  card.addEventListener('mousemove', e=>{
+    const rect = card.getBoundingClientRect();
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top + rect.height/2;
+    const dx = (e.clientX - cx) / (rect.width/2);
+    const dy = (e.clientY - cy) / (rect.height/2);
+    card.style.transform = `perspective(900px) rotateY(${dx*8}deg) rotateX(${-dy*8}deg) translateY(-2px)`;
+  });
+  card.addEventListener('mouseleave', ()=>{
+    card.style.transform = '';
+  });
+});
+
+/* ── GALLERY ──────────────────────────────────────── */
+document.querySelectorAll('.card-gallery[data-gallery]').forEach(gallery=>{
+  const imgs = gallery.querySelectorAll('img');
+  const dots = gallery.querySelectorAll('.gallery-dot');
+  if(imgs.length <= 1) return;
+  let current = 0;
+
+  function goTo(idx){
+    imgs[current].classList.remove('active');
+    dots[current] && dots[current].classList.remove('active');
+    current = (idx + imgs.length) % imgs.length;
+    imgs[current].classList.add('active');
+    dots[current] && dots[current].classList.add('active');
+  }
+
+  gallery.querySelector('.prev').addEventListener('click', e=>{
+    e.stopPropagation(); goTo(current-1);
+  });
+  gallery.querySelector('.next').addEventListener('click', e=>{
+    e.stopPropagation(); goTo(current+1);
+  });
+  dots.forEach((dot,i)=>{
+    dot.addEventListener('click', e=>{ e.stopPropagation(); goTo(i); });
+  });
+});
+
+/* ── LIGHTBOX ─────────────────────────────────────── */
+const lightbox    = document.getElementById('lightbox');
+const lightboxImg = document.getElementById('lightbox-img');
+const lightboxClose = document.getElementById('lightbox-close');
+
+document.querySelectorAll('.card-gallery img').forEach(img=>{
+  img.addEventListener('click', ()=>{
+    lightboxImg.src = img.src;
+    lightboxImg.alt = img.alt;
+    lightbox.classList.add('open');
+    lightbox.setAttribute('aria-hidden','false');
+    document.body.style.overflow = 'hidden';
+  });
+});
+function closeLightbox(){
+  lightbox.classList.remove('open');
+  lightbox.setAttribute('aria-hidden','true');
+  document.body.style.overflow = '';
+}
+lightboxClose.addEventListener('click', closeLightbox);
+lightbox.addEventListener('click', e=>{ if(e.target === lightbox) closeLightbox(); });
+
+/* ── MODAL ────────────────────────────────────────── */
+const overlay    = document.getElementById('modal-overlay');
+const modalContent = document.getElementById('modal-content');
+const modalClose = document.getElementById('modal-close');
+const modalPrev  = document.getElementById('modal-prev');
+const modalNext  = document.getElementById('modal-next');
+const modalCounter = document.getElementById('modal-counter');
+let visibleIds = ISSUES.map(i=>i.id);
+let currentModalId = null;
+
+function getVisibleCardIds(){
+  return Array.from(document.querySelectorAll('.issue-card:not(.hidden)'))
+    .map(c=>parseInt(c.dataset.num));
+}
+
+function openModal(id){
+  const card = document.getElementById('issue-'+id);
+  if(!card) return;
+  currentModalId = id;
+  visibleIds = getVisibleCardIds();
+  const idx = visibleIds.indexOf(id);
+
+  // Clone card body content into modal
+  const clone = card.querySelector('.card-body').cloneNode(true);
+  // Also clone gallery if exists
+  const galleryClone = card.querySelector('.card-gallery').cloneNode(true);
+  // Re-init gallery clicks in clone
+  galleryClone.querySelectorAll('img').forEach(img=>{
+    img.addEventListener('click', ()=>{
+      lightboxImg.src = img.src;
+      lightboxImg.alt = img.alt;
+      lightbox.classList.add('open');
+      lightbox.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
+    });
+  });
+  // Re-init gallery nav in clone
+  const cloneImgs = galleryClone.querySelectorAll('img');
+  const cloneDots = galleryClone.querySelectorAll('.gallery-dot');
+  if(cloneImgs.length > 1){
+    let cc = 0;
+    function cloneGoTo(i){
+      cloneImgs[cc].classList.remove('active');
+      cloneDots[cc] && cloneDots[cc].classList.remove('active');
+      cc = (i + cloneImgs.length) % cloneImgs.length;
+      cloneImgs[cc].classList.add('active');
+      cloneDots[cc] && cloneDots[cc].classList.add('active');
+    }
+    const cp = galleryClone.querySelector('.prev');
+    const cn = galleryClone.querySelector('.next');
+    if(cp) cp.addEventListener('click', e=>{ e.stopPropagation(); cloneGoTo(cc-1); });
+    if(cn) cn.addEventListener('click', e=>{ e.stopPropagation(); cloneGoTo(cc+1); });
+    cloneDots.forEach((d,i)=>d.addEventListener('click', e=>{ e.stopPropagation(); cloneGoTo(i); }));
+  }
+
+  modalContent.innerHTML = '';
+  modalContent.appendChild(galleryClone);
+  modalContent.appendChild(clone);
+
+  modalCounter.textContent = `${idx+1} / ${visibleIds.length}`;
+  modalPrev.disabled = idx === 0;
+  modalNext.disabled = idx === visibleIds.length - 1;
+
+  overlay.classList.add('open');
+  overlay.setAttribute('aria-hidden','false');
+  document.body.style.overflow = 'hidden';
+  history.pushState(null, '', '#issue-'+id);
+}
+
+function closeModal(){
+  overlay.classList.remove('open');
+  overlay.setAttribute('aria-hidden','true');
+  document.body.style.overflow = '';
+  currentModalId = null;
+  history.pushState(null, '', window.location.pathname);
+}
+
+function modalNavigate(dir){
+  if(currentModalId === null) return;
+  visibleIds = getVisibleCardIds();
+  const idx = visibleIds.indexOf(currentModalId);
+  const next = idx + dir;
+  if(next >= 0 && next < visibleIds.length) openModal(visibleIds[next]);
+}
+
+modalClose.addEventListener('click', closeModal);
+overlay.addEventListener('click', e=>{ if(e.target === overlay) closeModal(); });
+modalPrev.addEventListener('click', ()=>modalNavigate(-1));
+modalNext.addEventListener('click', ()=>modalNavigate(1));
+
+// Open via card title or expand button
+document.querySelectorAll('.card-title').forEach(title=>{
+  title.addEventListener('click', ()=>{
+    const card = title.closest('.issue-card');
+    if(card) openModal(parseInt(card.dataset.num));
+  });
+});
+document.querySelectorAll('.btn-expand').forEach(btn=>{
+  btn.addEventListener('click', ()=>openModal(parseInt(btn.dataset.id)));
+});
+
+// Keyboard navigation
+document.addEventListener('keydown', e=>{
+  if(overlay.classList.contains('open')){
+    if(e.key==='Escape') closeModal();
+    if(e.key==='ArrowLeft')  modalNavigate(-1);
+    if(e.key==='ArrowRight') modalNavigate(1);
+    return;
+  }
+  if(lightbox.classList.contains('open')){
+    if(e.key==='Escape') closeLightbox();
+    return;
+  }
+  if(e.key==='/' && e.target.tagName!=='INPUT'){
+    e.preventDefault();
+    document.getElementById('search-input').focus();
+  }
+  if(e.key==='Escape'){
+    const si = document.getElementById('search-input');
+    si.value = '';
+    si.dispatchEvent(new Event('input'));
+    si.blur();
+  }
+});
+
+// Mobile swipe on modal
+let touchStartX = 0;
+document.getElementById('modal-box').addEventListener('touchstart', e=>{
+  touchStartX = e.touches[0].clientX;
+}, {passive:true});
+document.getElementById('modal-box').addEventListener('touchend', e=>{
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if(Math.abs(dx) > 60){
+    modalNavigate(dx < 0 ? 1 : -1);
+  }
+}, {passive:true});
+
+// URL hash on load
+function checkHashOnLoad(){
+  const hash = window.location.hash;
+  if(hash && hash.startsWith('#issue-')){
+    const id = parseInt(hash.replace('#issue-',''));
+    if(id >= 1 && id <= 20){
+      setTimeout(()=>{
+        const el = document.getElementById('issue-'+id);
+        if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+        openModal(id);
+      }, 2800);
+    }
+  }
+}
+checkHashOnLoad();
+
+/* ── FILTERING ────────────────────────────────────── */
+let activeFilter = 'all';
+let activeSearch = '';
+let activeSort   = 'number';
+let criticalFirst = false;
+
+function applyFilters(){
+  const cards = Array.from(document.querySelectorAll('.issue-card'));
+  let visible = 0;
+
+  cards.forEach(card=>{
+    const tags = card.dataset.tags || '';
+    const sev  = card.dataset.severity || '';
+    const titleEn = card.querySelector('[data-en]')?.textContent?.toLowerCase() || '';
+    const titleAm = card.querySelector('[data-am]')?.textContent?.toLowerCase() || '';
+    const descEn = Array.from(card.querySelectorAll('.card-desc [data-en]')).map(e=>e.textContent).join(' ').toLowerCase();
+
+    // filter by tag tab
+    let tagMatch = true;
+    if(activeFilter !== 'all'){
+      tagMatch = tags.split(',').includes(activeFilter);
+    }
+
+    // filter by severity (from donut/tile click using criticalFirst or legend)
+    if(activeFilter === 'critical') tagMatch = (sev === 'critical');
+    if(activeFilter === 'high')     tagMatch = (sev === 'high');
+    if(activeFilter === 'medium')   tagMatch = (sev === 'medium');
+    if(activeFilter === 'low')      tagMatch = (sev === 'low');
+
+    // keyword search
+    let searchMatch = true;
+    if(activeSearch){
+      const q = activeSearch.toLowerCase();
+      searchMatch = titleEn.includes(q) || titleAm.includes(q) || descEn.includes(q);
+    }
+
+    const show = tagMatch && searchMatch;
+    card.classList.toggle('hidden', !show);
+    if(show) visible++;
+  });
+
+  document.getElementById('no-results').style.display = visible === 0 ? 'block' : 'none';
+
+  // Sort visible cards
+  const grid = document.getElementById('card-grid');
+  const visibleCards = Array.from(grid.querySelectorAll('.issue-card:not(.hidden)'));
+
+  if(criticalFirst){
+    visibleCards.sort((a,b)=>{
+      const sa = SEV_ORDER[a.dataset.severity] ?? 9;
+      const sb = SEV_ORDER[b.dataset.severity] ?? 9;
+      if(sa !== sb) return sa - sb;
+      return parseInt(a.dataset.num) - parseInt(b.dataset.num);
+    });
+  } else if(activeSort === 'severity'){
+    visibleCards.sort((a,b)=>{
+      const sa = SEV_ORDER[a.dataset.severity] ?? 9;
+      const sb = SEV_ORDER[b.dataset.severity] ?? 9;
+      if(sa !== sb) return sa - sb;
+      return parseInt(a.dataset.num) - parseInt(b.dataset.num);
+    });
+  } else {
+    visibleCards.sort((a,b)=> parseInt(a.dataset.num) - parseInt(b.dataset.num));
+  }
+
+  // Also sort hidden cards by number and append at end (they remain hidden)
+  const hiddenCards = Array.from(grid.querySelectorAll('.issue-card.hidden'));
+  hiddenCards.sort((a,b)=> parseInt(a.dataset.num) - parseInt(b.dataset.num));
+
+  [...visibleCards, ...hiddenCards].forEach(c=>grid.appendChild(c));
+}
+
+// Filter tabs
+document.querySelectorAll('.filter-tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    activeFilter = tab.dataset.filter;
+    criticalFirst = false;
+    document.getElementById('critical-btn').classList.remove('active');
+    document.getElementById('critical-btn').setAttribute('aria-pressed','false');
+    // Clear severity-active legend
+    document.querySelectorAll('.legend-item').forEach(l=>l.classList.remove('active'));
+    // Clear stat tile active
+    document.querySelectorAll('.stat-tile').forEach(t=>t.classList.remove('active'));
+    applyFilters();
+  });
+});
+
+// Stat tiles
+document.querySelectorAll('.stat-tile').forEach(tile=>{
+  tile.addEventListener('click', ()=>{
+    document.querySelectorAll('.stat-tile').forEach(t=>t.classList.remove('active'));
+    tile.classList.add('active');
+    const f = tile.dataset.tile;
+    activeFilter = f;
+    criticalFirst = false;
+    document.getElementById('critical-btn').classList.remove('active');
+    document.getElementById('critical-btn').setAttribute('aria-pressed','false');
+    // sync filter tab
+    document.querySelectorAll('.filter-tab').forEach(t=>{
+      t.classList.toggle('active', t.dataset.filter === (f === 'critical' ? 'all' : f) || (f==='all' && t.dataset.filter==='all'));
+    });
+    applyFilters();
+  });
+  tile.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' ') tile.click(); });
+});
+
+// Search
+document.getElementById('search-input').addEventListener('input', e=>{
+  activeSearch = e.target.value.trim();
+  applyFilters();
+});
+
+// Sort
+document.getElementById('sort-select').addEventListener('change', e=>{
+  activeSort = e.target.value;
+  applyFilters();
+});
+
+// Critical First button
+document.getElementById('critical-btn').addEventListener('click', function(){
+  criticalFirst = !criticalFirst;
+  this.classList.toggle('active', criticalFirst);
+  this.setAttribute('aria-pressed', criticalFirst ? 'true' : 'false');
+  applyFilters();
+});
+
+// Severity filter from legend
+document.querySelectorAll('.legend-item').forEach(item=>{
+  item.addEventListener('click', ()=>{
+    const sev = item.dataset.sev;
+    filterBySeverity(sev);
+  });
+  item.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' ') item.click(); });
+});
+
+function filterBySeverity(sev){
+  if(activeFilter === sev){
+    // Toggle off
+    activeFilter = 'all';
+    document.querySelectorAll('.legend-item').forEach(l=>l.classList.remove('active'));
+    document.querySelectorAll('.filter-tab').forEach(t=>t.classList.toggle('active', t.dataset.filter==='all'));
+  } else {
+    activeFilter = sev;
+    document.querySelectorAll('.legend-item').forEach(l=>{
+      l.classList.toggle('active', l.dataset.sev===sev);
+    });
+    document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));
+  }
+  applyFilters();
+}
+
+/* ── COPY LINK ────────────────────────────────────── */
+document.querySelectorAll('.btn-copy').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const id = btn.dataset.id;
+    const url = `${window.location.href.split('#')[0]}#issue-${id}`;
+    navigator.clipboard.writeText(url).then(()=>{
+      showToast(isAM() ? 'ተቀድቷል!' : 'Copied!');
+    }).catch(()=>{
+      showToast('Copied!');
+    });
+  });
+});
+
+function showToast(msg){
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'), 2000);
+}
+
+/* ── THEME TOGGLE ─────────────────────────────────── */
+const themeBtn = document.getElementById('theme-btn');
+function applyTheme(isLight){
+  document.documentElement.classList.toggle('light', isLight);
+  themeBtn.textContent = isLight ? '🌙' : '☀️';
+  localStorage.setItem('fxleag-theme', isLight ? 'light' : 'dark');
+}
+themeBtn.addEventListener('click', ()=>{
+  applyTheme(!document.documentElement.classList.contains('light'));
+});
+// Load saved theme
+(()=>{
+  const saved = localStorage.getItem('fxleag-theme');
+  if(saved === 'light') applyTheme(true);
+})();
+
+/* ── LANGUAGE TOGGLE ──────────────────────────────── */
+const langBtn = document.getElementById('lang-btn');
+function applyLang(isAm){
+  document.documentElement.classList.toggle('am', isAm);
+  langBtn.textContent = isAm ? '🇪🇹 አማርኛ' : '🇬🇧 EN';
+  document.documentElement.lang = isAm ? 'am' : 'en';
+  localStorage.setItem('fxleag-lang', isAm ? 'am' : 'en');
+  // Update donut labels
+  const centerLabel = document.getElementById('donut-center-label');
+  if(centerLabel) centerLabel.textContent = isAm ? 'ጠቅላላ' : 'Total';
+  // Update select options
+  const sortSelect = document.getElementById('sort-select');
+  if(sortSelect){
+    sortSelect.options[0].text = isAm ? 'አቀማመጥ: ቁጥር' : 'Sort: Number';
+    sortSelect.options[1].text = isAm ? 'አቀማመጥ: ክብደት' : 'Sort: Severity';
+  }
+  // Rebuild ticker with new language visibility
+  // (CSS handles data-en/data-am display, nothing extra needed)
+}
+langBtn.addEventListener('click', ()=>{
+  applyLang(!document.documentElement.classList.contains('am'));
+});
+// Load saved lang
+(()=>{
+  const saved = localStorage.getItem('fxleag-lang');
+  if(saved === 'am') applyLang(true);
+})();
+
+})(); // close main IIFE
+</script>
+
+<!-- ══ MUSIC PLAYER ═══════════════════════════════════ -->
+<div id="music-player" class="paused">
+  <button id="music-play-btn" aria-label="Play / Pause music" onclick="toggleMusic()">
+    <svg id="icon-play" viewBox="0 0 16 16" fill="#000"><path d="M4 2.5l10 5.5-10 5.5z"/></svg>
+    <svg id="icon-pause" viewBox="0 0 16 16" fill="#000" style="display:none"><rect x="3" y="2" width="4" height="12" rx="1"/><rect x="9" y="2" width="4" height="12" rx="1"/></svg>
+  </button>
+  <div class="music-info">
+    <span class="music-title">Broken Angel</span>
+    <span class="music-sub">Arash feat. Helena</span>
+  </div>
+  <div class="music-wave" aria-hidden="true">
+    <span></span><span></span><span></span><span></span><span></span>
+  </div>
+  <input id="music-vol" type="range" min="0" max="1" step="0.05" value="0.35"
+    aria-label="Volume" oninput="setVol(this.value)" title="Volume"/>
+</div>
+
+<audio id="bg-music" loop preload="auto">
+  <source src="Arash_feat._Helena_-_Broken_Angel___DEEPO_Remix(360p).mp4" type="video/mp4"/>
+</audio>
+
+<script>
+/* ── MUSIC PLAYER ── */
+(function(){
+  const audio     = document.getElementById('bg-music');
+  const player    = document.getElementById('music-player');
+  const iconPlay  = document.getElementById('icon-play');
+  const iconPause = document.getElementById('icon-pause');
+  if(!audio || !player) return;
+
+  // Set initial volume
+  audio.volume = 0.35;
+
+  window.toggleMusic = function(){
+    if(audio.paused){
+      audio.play().then(()=>{
+        player.classList.remove('paused');
+        iconPlay.style.display  = 'none';
+        iconPause.style.display = 'block';
+      }).catch(()=>{});
+    } else {
+      audio.pause();
+      player.classList.add('paused');
+      iconPlay.style.display  = 'block';
+      iconPause.style.display = 'none';
+    }
+  };
+
+  window.setVol = function(v){
+    audio.volume = parseFloat(v);
+  };
+})();
+</script>
+
+</body>
+</html>
