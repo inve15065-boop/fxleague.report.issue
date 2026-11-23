@@ -107,7 +107,8 @@ html:not(.am) [data-am]{display:none!important}
 #intro-headline p{color:#888;font-size:.95rem;margin-top:4px}
 @keyframes slideUp{to{opacity:1;transform:translateY(0)}}
 
-/* ── STICKY TOOLBAR ──────────────────────────────────── */
+/* ── HIDDEN CARD (filter) ───────────────────────────── */
+.issue-card.hidden{display:none!important}
 #toolbar{
   position:sticky;top:0;z-index:900;
   background:rgba(10,10,10,.92);
@@ -116,9 +117,48 @@ html:not(.am) [data-am]{display:none!important}
   border-bottom:1px solid var(--border);
   padding:10px 20px;
   display:flex;flex-wrap:wrap;gap:10px;align-items:center;
-  transition:background .3s;
+  transition:transform .3s cubic-bezier(.22,1,.36,1),background .3s,opacity .3s;
+}
+#toolbar.toolbar-hidden{
+  transform:translateY(-110%);
+  opacity:0;
+  pointer-events:none;
 }
 html.light #toolbar{background:rgba(245,245,243,.93)}
+
+/* toolbar show button */
+#toolbar-show-btn{
+  position:fixed;top:12px;left:50%;
+  transform:translateX(-50%) translateY(-60px);
+  z-index:901;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:999px;padding:6px 18px;
+  font-size:12px;font-weight:600;color:var(--text);
+  cursor:pointer;display:flex;align-items:center;gap:6px;
+  box-shadow:0 4px 20px rgba(0,0,0,.4);
+  transition:transform .3s cubic-bezier(.22,1,.36,1),opacity .3s;
+  opacity:0;pointer-events:none;backdrop-filter:blur(10px);
+}
+#toolbar-show-btn.visible{
+  transform:translateX(-50%) translateY(0);
+  opacity:1;pointer-events:all;
+}
+#toolbar-show-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* scroll-to-top button */
+#scroll-top-btn{
+  position:fixed;bottom:88px;right:24px;z-index:7999;
+  width:44px;height:44px;border-radius:50%;
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--text);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 20px rgba(0,0,0,.4);
+  transition:all .25s cubic-bezier(.22,1,.36,1);
+  opacity:0;transform:translateY(16px);pointer-events:none;
+  backdrop-filter:blur(10px);
+}
+#scroll-top-btn.visible{opacity:1;transform:translateY(0);pointer-events:all}
+#scroll-top-btn:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-3px)}
 
 .filter-tabs{display:flex;gap:6px;flex-wrap:wrap}
 .filter-tab{
@@ -730,7 +770,16 @@ html.light .music-title{color:#0A0A0A}
   </div>
 </nav>
 
-<!-- ══ HEADER ════════════════════════════════════════ -->
+<!-- toolbar show button (appears when toolbar is scrolled away) -->
+<button id="toolbar-show-btn" onclick="showToolbar()" aria-label="Show toolbar">
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 10l5-5 5 5"/></svg>
+  <span data-en>Show menu</span><span data-am>ምናሌ አሳይ</span>
+</button>
+
+<!-- scroll to top -->
+<button id="scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top" title="Back to top">
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l5-5 5 5"/></svg>
+</button>
 <header id="header">
   <h2>
     <span data-en>FX<span style="color:var(--accent)">Leag</span> QA Report</span>
@@ -2351,22 +2400,22 @@ function filterBySeverity(sev){
 /* ── COPY LINK ────────────────────────────────────── */
 document.querySelectorAll('.btn-copy').forEach(btn=>{
   btn.addEventListener('click', ()=>{
-    const id = btn.dataset.id;
-    const url = `${window.location.href.split('#')[0]}#issue-${id}`;
+    const id = parseInt(btn.dataset.id);
     const isAm = document.documentElement.classList.contains('am');
-    const msg = isAm
-      ? `ሰላም! ይህን ችግር ተመልከት: ${url}\n\nፕላትፎርሙን ዝርዝር ሞክሬ ብዙ ሳንካዎች፣ ማሻሻያዎችና ደህንነት ችግሮች አግኝቼያለሁ። ይህ version 2 ላይ ያለ ጥልቅ ምርምር ነው። ቀላል የሚስተካከሉ ወይም የሚሻሻሉ ናቸው።`
-      : `Hi! Check out this issue I found: ${url}\n\nI was testing the platform in detail and found several bugs, improvements and security issues. I went deeply into version 2 — these are all fixable. Happy to discuss any of them.`;
-    navigator.clipboard.writeText(url).then(()=>{
-      showToast(isAm ? 'ተቀድቷል! Telegram ይከፈታል…' : 'Copied! Opening Telegram…');
-      setTimeout(()=>{
-        const tgUrl = `https://t.me/stoiclife2?text=${encodeURIComponent(msg)}`;
-        window.open(tgUrl, '_blank', 'noopener');
-      }, 800);
-    }).catch(()=>{
-      const tgUrl = `https://t.me/stoiclife2?text=${encodeURIComponent(msg)}`;
-      window.open(tgUrl, '_blank', 'noopener');
-    });
+    // Build the direct URL to this issue
+    const url = `${window.location.href.split('#')[0]}#issue-${id}`;
+    // Copy to clipboard
+    navigator.clipboard.writeText(url).catch(()=>{});
+    // Scroll to the card smoothly
+    const card = document.getElementById('issue-'+id);
+    if(card){
+      card.scrollIntoView({behavior:'smooth', block:'center'});
+      // Briefly highlight the card
+      card.style.outline = `2px solid var(--accent)`;
+      card.style.outlineOffset = '4px';
+      setTimeout(()=>{ card.style.outline=''; card.style.outlineOffset=''; }, 1800);
+    }
+    showToast(isAm ? '✓ አገናኝ ተቀድቷል' : '✓ Link copied');
   });
 });
 
@@ -2422,6 +2471,48 @@ langBtn.addEventListener('click', ()=>{
 })();
 
 })(); // close main IIFE
+
+/* ── TOOLBAR HIDE ON SCROLL ──────────────────────── */
+(function(){
+  const toolbar   = document.getElementById('toolbar');
+  const showBtn   = document.getElementById('toolbar-show-btn');
+  const scrollBtn = document.getElementById('scroll-top-btn');
+  let lastY = 0;
+  let toolbarHidden = false;
+
+  window.showToolbar = function(){
+    toolbarHidden = false;
+    toolbar.classList.remove('toolbar-hidden');
+    showBtn.classList.remove('visible');
+  };
+
+  window.addEventListener('scroll', ()=>{
+    const y = window.scrollY;
+
+    // scroll-to-top button: show after 400px
+    scrollBtn.classList.toggle('visible', y > 400);
+
+    // toolbar: hide on scroll down (>120px from top), show on scroll up
+    if(y < 80){
+      // near top — always show
+      toolbarHidden = false;
+      toolbar.classList.remove('toolbar-hidden');
+      showBtn.classList.remove('visible');
+    } else if(y > lastY + 8 && !toolbarHidden){
+      // scrolling down — hide
+      toolbarHidden = true;
+      toolbar.classList.add('toolbar-hidden');
+      showBtn.classList.add('visible');
+    } else if(y < lastY - 8 && toolbarHidden){
+      // scrolling up — show
+      toolbarHidden = false;
+      toolbar.classList.remove('toolbar-hidden');
+      showBtn.classList.remove('visible');
+    }
+
+    lastY = y;
+  }, {passive:true});
+})();
 </script>
 
 <!-- ══ MUSIC PLAYER ═══════════════════════════════════ -->
